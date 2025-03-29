@@ -1,0 +1,51 @@
+name: Build and run tests
+
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOTNET_INSTALL_DIR: 'dotnet'
+    strategy:
+      matrix:
+        dotnet-version: [9.0.x]
+    defaults:
+      run:
+        working-directory: ./backend/Registry
+
+    steps:
+      - name: Copy repository
+        uses: actions/checkout@v4
+
+      - name: Install dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ matrix.dotnet-version  }}
+
+      - name: Check installed/cached dotnet version
+        run: dotnet --version
+
+      - name: Check backend build
+        run: dotnet build
+
+      - name: Check backend tests
+        run: dotnet test
+
+      # Frontend steps
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # Specify the Node.js version you need
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend/app-ui
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend/app-ui
+        run: npm run build
