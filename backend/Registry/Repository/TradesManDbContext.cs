@@ -1,12 +1,20 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
-using Registry.Domain;
+using Registry.Models;
 
 namespace Registry.Repository
 {
+    public record ConnectionString(string Connection);
     public class TradesManDbContext : DbContext
     {
+        private readonly string _connectionString;
+
+        public TradesManDbContext(ConnectionString connectionString)
+        {
+            _connectionString = connectionString.Connection;
+        }
+
         public DbSet<Client> Clients { get; set; }
+        public DbSet<User> Users { get; set; }
         public DbSet<Job> Jobs { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Specialty> Specialties { get; set; }
@@ -24,7 +32,7 @@ namespace Registry.Repository
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer();
+            optionsBuilder.UseSqlServer(_connectionString);
         }
     }
 }

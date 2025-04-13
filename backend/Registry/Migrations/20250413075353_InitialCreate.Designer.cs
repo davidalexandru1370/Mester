@@ -12,7 +12,7 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    [Migration("20250401162844_InitialCreate")]
+    [Migration("20250413075353_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -20,12 +20,12 @@ namespace Registry.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.3")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Registry.Domain.Client", b =>
+            modelBuilder.Entity("Registry.Models.Client", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -44,7 +44,7 @@ namespace Registry.Migrations
                     b.ToTable("Clients");
                 });
 
-            modelBuilder.Entity("Registry.Domain.Job", b =>
+            modelBuilder.Entity("Registry.Models.Job", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -71,7 +71,7 @@ namespace Registry.Migrations
                     b.ToTable("Jobs");
                 });
 
-            modelBuilder.Entity("Registry.Domain.Review", b =>
+            modelBuilder.Entity("Registry.Models.Review", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -94,7 +94,7 @@ namespace Registry.Migrations
                     b.ToTable("Reviews");
                 });
 
-            modelBuilder.Entity("Registry.Domain.Specialty", b =>
+            modelBuilder.Entity("Registry.Models.Specialty", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -119,7 +119,7 @@ namespace Registry.Migrations
                     b.ToTable("Specialties");
                 });
 
-            modelBuilder.Entity("Registry.Domain.TradesMan", b =>
+            modelBuilder.Entity("Registry.Models.TradesMan", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -134,15 +134,38 @@ namespace Registry.Migrations
                     b.ToTable("TradesMen");
                 });
 
-            modelBuilder.Entity("Registry.Domain.Job", b =>
+            modelBuilder.Entity("Registry.Models.User", b =>
                 {
-                    b.HasOne("Registry.Domain.Client", "Client")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HashPassword")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Salt")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Registry.Models.Job", b =>
+                {
+                    b.HasOne("Registry.Models.Client", "Client")
                         .WithMany()
                         .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Registry.Domain.TradesMan", "TradesMan")
+                    b.HasOne("Registry.Models.TradesMan", "TradesMan")
                         .WithMany()
                         .HasForeignKey("TradesManId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -153,9 +176,9 @@ namespace Registry.Migrations
                     b.Navigation("TradesMan");
                 });
 
-            modelBuilder.Entity("Registry.Domain.Review", b =>
+            modelBuilder.Entity("Registry.Models.Review", b =>
                 {
-                    b.HasOne("Registry.Domain.Job", "Job")
+                    b.HasOne("Registry.Models.Job", "Job")
                         .WithMany()
                         .HasForeignKey("JobId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -164,23 +187,23 @@ namespace Registry.Migrations
                     b.Navigation("Job");
                 });
 
-            modelBuilder.Entity("Registry.Domain.Specialty", b =>
+            modelBuilder.Entity("Registry.Models.Specialty", b =>
                 {
-                    b.HasOne("Registry.Domain.Job", null)
+                    b.HasOne("Registry.Models.Job", null)
                         .WithMany("JobTypes")
                         .HasForeignKey("JobId");
 
-                    b.HasOne("Registry.Domain.TradesMan", null)
+                    b.HasOne("Registry.Models.TradesMan", null)
                         .WithMany("Specialties")
                         .HasForeignKey("TradesManId");
                 });
 
-            modelBuilder.Entity("Registry.Domain.Job", b =>
+            modelBuilder.Entity("Registry.Models.Job", b =>
                 {
                     b.Navigation("JobTypes");
                 });
 
-            modelBuilder.Entity("Registry.Domain.TradesMan", b =>
+            modelBuilder.Entity("Registry.Models.TradesMan", b =>
                 {
                     b.Navigation("Specialties");
                 });
