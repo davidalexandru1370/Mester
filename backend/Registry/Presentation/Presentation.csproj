@@ -30,4 +30,11 @@
       <Folder Include="Migrations\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Infrastructure\obj\Infrastructure.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Infrastructure\obj\project.assets.json" />
+      <_ContentIncludedByDefault Remove="Application\obj\Application.csproj.nuget.dgspec.json" />
+      <_ContentIncludedByDefault Remove="Application\obj\project.assets.json" />
+    </ItemGroup>
+
 </Project>
