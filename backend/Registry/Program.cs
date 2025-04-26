@@ -12,7 +12,7 @@ var config = builder.Configuration;
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -38,41 +38,33 @@ builder.Services
     .AddServices(config)
     .AddValidators();
 
-builder.Services.AddCors(o =>
-{
-    o.AddPolicy("allPolicy", builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
-    });
-});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
-//builder.Services.AddAntiforgery();
-
+builder.Services.AddAntiforgery(setup =>
+{
+    setup.Cookie.Expiration = TimeSpan.Zero;
+    setup.SuppressXFrameOptionsHeader = true;
+});
 
 
 
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    //app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
 
-app.UseCors("allPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
-//app.UseAntiforgery();
 
 app.UseIdentityRoutes();
-app.UseCors("EnableCors");
+
+app.UseAntiforgery();
 
 app.Run();

@@ -8,26 +8,29 @@ namespace Registry.Repository
     {
         private readonly string _connectionString;
 
-        public TradesManDbContext(ConnectionString connectionString)
+        public TradesManDbContext(DbContextOptions<TradesManDbContext> options, ConnectionString connectionString) : base(options)
         {
             _connectionString = connectionString.Connection;
         }
 
-        public DbSet<Client> Clients { get; set; }
-        public DbSet<User> Users { get; set; }
-        public DbSet<Job> Jobs { get; set; }
-        public DbSet<Review> Reviews { get; set; }
-        public DbSet<Specialty> Specialties { get; set; }
-        public DbSet<TradesMan> TradesMen { get; set; }
+        public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<Job> Jobs { get; set; }
+        public virtual DbSet<Review> Reviews { get; set; }
+        public virtual DbSet<Specialty> Specialties { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //modelBuilder.Entity<Post>()
-            //    .HasOne(p => p.Blog)
-            //    .WithMany(b => b.Posts)
-            //    .HasForeignKey(p => p.BlogUrl)
-            //    .HasPrincipalKey(b => b.Url);
+            modelBuilder.Entity<Job>()
+                   .HasOne(x => x.Client)
+                   .WithMany().OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<User>()
+                .HasOne(x => x.TradesManProfile)
+                .WithOne().OnDelete(DeleteBehavior.Restrict)
+                .HasForeignKey<TradesMan>(x => x.Id);
+
+            modelBuilder.Entity<Specialty>().HasIndex(e => e.Type).IsUnique();
+
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Registry.Repository;
 
@@ -11,9 +12,11 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    partial class TradesManDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250426155427_InitialMigration")]
+    partial class InitialMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -86,7 +89,7 @@ namespace Registry.Migrations
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -94,16 +97,18 @@ namespace Registry.Migrations
 
                     b.HasIndex("TradesManId");
 
-                    b.HasIndex("Type")
-                        .IsUnique();
-
                     b.ToTable("Specialties");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -120,10 +125,6 @@ namespace Registry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -132,7 +133,16 @@ namespace Registry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TradesManProfileId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("TradesManProfileId");
 
                     b.ToTable("Users");
                 });
@@ -178,13 +188,13 @@ namespace Registry.Migrations
                         .HasForeignKey("TradesManId");
                 });
 
-            modelBuilder.Entity("Registry.Models.TradesMan", b =>
+            modelBuilder.Entity("Registry.Models.User", b =>
                 {
-                    b.HasOne("Registry.Models.User", null)
-                        .WithOne("TradesManProfile")
-                        .HasForeignKey("Registry.Models.TradesMan", "Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("Registry.Models.TradesMan", "TradesManProfile")
+                        .WithMany()
+                        .HasForeignKey("TradesManProfileId");
+
+                    b.Navigation("TradesManProfile");
                 });
 
             modelBuilder.Entity("Registry.Models.Job", b =>
@@ -195,11 +205,6 @@ namespace Registry.Migrations
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
                 {
                     b.Navigation("Specialties");
-                });
-
-            modelBuilder.Entity("Registry.Models.User", b =>
-                {
-                    b.Navigation("TradesManProfile");
                 });
 #pragma warning restore 612, 618
         }

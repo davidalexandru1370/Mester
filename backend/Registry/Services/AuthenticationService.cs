@@ -74,7 +74,7 @@ public class AuthenticationService
         return new TokenResponse(jwt, (int)tokenLifetime.TotalSeconds);
     }
 
-    public async Task CreateUser(string username, string password)
+    public async Task CreateUser(string username, string password, string phoneNumber)
     {
         var salt = Guid.NewGuid().ToString();
 
@@ -83,7 +83,8 @@ public class AuthenticationService
         {
             HashPassword = passwordHashed,
             Salt = salt,
-            Username = username,
+            Name = username,
+            PhoneNumber = phoneNumber,
         };
         try
         {
