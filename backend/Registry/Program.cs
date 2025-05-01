@@ -38,6 +38,7 @@ builder.Services
     .AddServices(config)
     .AddValidators();
 
+builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -64,6 +65,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseIdentityRoutes();
+app.MapControllers();
 
 app.UseAntiforgery();
 
