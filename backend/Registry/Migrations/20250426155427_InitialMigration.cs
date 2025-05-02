@@ -6,26 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Registry.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Clients",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Clients", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TradesMen",
+                name: "TradesMan",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -33,7 +20,7 @@ namespace Registry.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TradesMen", x => x.Id);
+                    table.PrimaryKey("PK_TradesMan", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -43,11 +30,18 @@ namespace Registry.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     HashPassword = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Salt = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Salt = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TradesManProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Users_TradesMan_TradesManProfileId",
+                        column: x => x.TradesManProfileId,
+                        principalTable: "TradesMan",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -64,15 +58,15 @@ namespace Registry.Migrations
                 {
                     table.PrimaryKey("PK_Jobs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Jobs_Clients_ClientId",
+                        name: "FK_Jobs_Users_ClientId",
                         column: x => x.ClientId,
-                        principalTable: "Clients",
+                        principalTable: "Users",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_Jobs_TradesMen_TradesManId",
+                        name: "FK_Jobs_Users_TradesManId",
                         column: x => x.TradesManId,
-                        principalTable: "TradesMen",
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -115,9 +109,9 @@ namespace Registry.Migrations
                         principalTable: "Jobs",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Specialties_TradesMen_TradesManId",
+                        name: "FK_Specialties_TradesMan_TradesManId",
                         column: x => x.TradesManId,
-                        principalTable: "TradesMen",
+                        principalTable: "TradesMan",
                         principalColumn: "Id");
                 });
 
@@ -145,6 +139,11 @@ namespace Registry.Migrations
                 name: "IX_Specialties_TradesManId",
                 table: "Specialties",
                 column: "TradesManId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_TradesManProfileId",
+                table: "Users",
+                column: "TradesManProfileId");
         }
 
         /// <inheritdoc />
@@ -157,16 +156,13 @@ namespace Registry.Migrations
                 name: "Specialties");
 
             migrationBuilder.DropTable(
-                name: "Users");
-
-            migrationBuilder.DropTable(
                 name: "Jobs");
 
             migrationBuilder.DropTable(
-                name: "Clients");
+                name: "Users");
 
             migrationBuilder.DropTable(
-                name: "TradesMen");
+                name: "TradesMan");
         }
     }
 }

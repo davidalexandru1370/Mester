@@ -3,9 +3,9 @@ using Registry.Models;
 
 namespace Registry.Validator;
 
-public class ClientValidator : AbstractValidator<Client>
+public class UserValidator : AbstractValidator<User>
 {
-    public ClientValidator()
+    public UserValidator()
     {
         RuleFor(x => x.Name).NotEmpty().WithMessage("Name must not be empty");
         RuleFor(x => x.PhoneNumber).NotEmpty().WithMessage("Phone number must not be empty");
