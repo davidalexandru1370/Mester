@@ -10,7 +10,7 @@ export default function OfferWindow() {
             <div className="meta d-flex justify-content-between">
                 <p>Frec menta</p>
             </div>
-        <h4 className="title"><a href="product-details.html">Stima si respect</a></h4>
+        <h4 className="title">Stima si respect</h4>
         <p><i className="far fa-map-marker-alt"></i>Cluj-Napoca, Cluj</p>
         <div className="ads_price_date d-flex justify-content-between">
             <span className="price">2 RON</span>
