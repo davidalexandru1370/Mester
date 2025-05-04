@@ -12,8 +12,8 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    [Migration("20250413075353_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250501193741_AddDescriptionToTradesMan")]
+    partial class AddDescriptionToTradesMan
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,25 +24,6 @@ namespace Registry.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Registry.Models.Client", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Clients");
-                });
 
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
@@ -108,7 +89,7 @@ namespace Registry.Migrations
 
                     b.Property<string>("Type")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -116,22 +97,24 @@ namespace Registry.Migrations
 
                     b.HasIndex("TradesManId");
 
+                    b.HasIndex("Type")
+                        .IsUnique();
+
                     b.ToTable("Specialties");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("TradesMen");
+                    b.ToTable("TradesMan");
                 });
 
             modelBuilder.Entity("Registry.Models.User", b =>
@@ -144,11 +127,15 @@ namespace Registry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Salt")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Username")
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Salt")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -159,13 +146,13 @@ namespace Registry.Migrations
 
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
-                    b.HasOne("Registry.Models.Client", "Client")
+                    b.HasOne("Registry.Models.User", "Client")
                         .WithMany()
                         .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Registry.Models.TradesMan", "TradesMan")
+                    b.HasOne("Registry.Models.User", "TradesMan")
                         .WithMany()
                         .HasForeignKey("TradesManId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -198,6 +185,15 @@ namespace Registry.Migrations
                         .HasForeignKey("TradesManId");
                 });
 
+            modelBuilder.Entity("Registry.Models.TradesMan", b =>
+                {
+                    b.HasOne("Registry.Models.User", null)
+                        .WithOne("TradesManProfile")
+                        .HasForeignKey("Registry.Models.TradesMan", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
                     b.Navigation("JobTypes");
@@ -206,6 +202,11 @@ namespace Registry.Migrations
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
                 {
                     b.Navigation("Specialties");
+                });
+
+            modelBuilder.Entity("Registry.Models.User", b =>
+                {
+                    b.Navigation("TradesManProfile");
                 });
 #pragma warning restore 612, 618
         }

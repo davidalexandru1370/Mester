@@ -2,11 +2,15 @@
 
 public class User
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; }
 
-    public required string Username { get; set; }
+    public required string Name { get; set; }
 
     public required string HashPassword { get; set; }
 
     public required string Salt { get; set; }
+
+    public required string PhoneNumber { get; set; }
+
+    public TradesMan? TradesManProfile { get; set; }
 }

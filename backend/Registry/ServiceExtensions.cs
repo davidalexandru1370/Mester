@@ -25,12 +25,13 @@ namespace Registry
                 return ActivatorUtilities.CreateInstance<AuthenticationService>(x,
                     config["JwtSettings:Key"] ?? throw new Exception("No key specified"),
                     TimeSpan.FromHours(1));
-            });
+            })
+            .AddScoped<TradesManService>();
         }
 
         public static IServiceCollection AddValidators(this IServiceCollection services)
         {
-            return services.AddSingleton<IValidator<Client>, ClientValidator>();
+            return services.AddSingleton<IValidator<User>, UserValidator>();
         }
 
         public static IApplicationBuilder UseServiceExceptionMiddleware(this IApplicationBuilder app)

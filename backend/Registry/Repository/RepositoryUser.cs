@@ -27,10 +27,24 @@ namespace Registry.Repository
             }
         }
 
+        public async Task Modify(User user)
+        {
+            try
+            {
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException e)
+            {
+                throw RepositoryException.From(e);
+            }
+        }
+
         public async Task<User?> FindByUsername(string username)
         {
             var user = await _context.Users
-                .Where(x => x.Username == username)
+                .Where(x => x.Name == username)
+                .Include(x => x.TradesManProfile)
                 .FirstOrDefaultAsync();
             return user;
         }
