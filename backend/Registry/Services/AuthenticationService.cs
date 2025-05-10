@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.IdentityModel.Tokens;
 using Registry.Errors.Repositories;
 using Registry.Errors.Services;
 using Registry.Models;
@@ -11,6 +12,7 @@ using System.Text.Json;
 
 namespace Registry.Services;
 
+[EnableCors("allPolicy")]
 public class AuthenticationService
 {
     private readonly string tokenSecret;
