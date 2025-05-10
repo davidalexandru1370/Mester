@@ -3,6 +3,7 @@ using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
 using Registry.Services;
+using Registry.Services.Interfaces;
 using Registry.Validator;
 
 namespace Registry
@@ -26,7 +27,8 @@ namespace Registry
                     config["JwtSettings:Key"] ?? throw new Exception("No key specified"),
                     TimeSpan.FromHours(1));
             })
-            .AddScoped<TradesManService>();
+            .AddScoped<TradesManService>()
+            .AddScoped<IImageService, ImageService>();
         }
 
         public static IServiceCollection AddValidators(this IServiceCollection services)
