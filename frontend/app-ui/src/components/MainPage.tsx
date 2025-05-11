@@ -19,6 +19,7 @@ import {
   FilterActionType,
   SearchTradesManFilters,
 } from "@/domain/types/filters.ts";
+import ServiceTypeCard from "./internal/serviceTypeCard.tsx";
 
 function updateFiltersReducer(
   state: SearchTradesManFilters,
@@ -112,28 +113,27 @@ export default function MainPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       </Container>
-      <h1>Current offers</h1>
+      <h1>Ofertele curente</h1>
       <br></br>
-      <table className="table table-dark" align="center">
-        <thead>
-          <tr>
-            <th scope="col">Id</th>
-            <th scope="col">Name</th>
-            <th scope="col">Description</th>
-          </tr>
-        </thead>
-        {tradesmen?.map(function fn(tradesman: any) {
-          return (
-            <tbody>
-              <tr>
-                <th scope="row">{tradesman.id} </th>
-                <td>{tradesman.name}</td>
-                <td>{tradesman.description}</td>
-              </tr>
-            </tbody>
-          );
-        })}
-      </table>
+
+      {tradesmen?.map(function fn(tradesman: any) {
+        return (
+          <ServiceTypeCard
+            key={tradesman.id}
+            title={tradesman.name}
+            price={tradesman.price}
+            imageUrl=""
+            location={{
+              value: tradesman.city,
+              displayLabel: tradesman.city,
+              county: {
+                value: tradesman.county,
+                displayLabel: tradesman.county,
+              },
+            }}
+          />
+        );
+      })}
     </section>
   );
 }
