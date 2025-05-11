@@ -1,18 +1,22 @@
-import { County, City } from "@/domain/types/localization";
+import { County, City, CountyWithCities } from "@/domain/types/localization";
 import { createContext, FC, useState } from "react";
 import * as counties from "@/assets/data/regions.json";
 
 interface DataStoreContextType {
-  counties: County[];
-  setCounties: React.Dispatch<React.SetStateAction<County[]>>;
+  counties: CountyWithCities[];
+  setCounties: React.Dispatch<React.SetStateAction<CountyWithCities[]>>;
 }
 
-const initialCounties: County[] = Object.entries(counties).map(
-  ([key, value]): County => {
+const initialCounties: CountyWithCities[] = Object.entries(counties).map(
+  ([key, value]): CountyWithCities => {
     const cities: City[] = Object.values(value).map((city: any): City => {
       return {
         value: city.name,
         displayLabel: city.name,
+        county: {
+          value: key,
+          displayLabel: key,
+        },
       };
     });
 
@@ -32,7 +36,7 @@ export const DataStoreContext = createContext<DataStoreContextType>({
 export const DataStoreContextProvider: FC<{ children: any }> = ({
   children,
 }) => {
-  const [counties, setCounties] = useState<County[]>(initialCounties);
+  const [counties, setCounties] = useState<CountyWithCities[]>(initialCounties);
 
   return (
     <DataStoreContext.Provider value={{ counties, setCounties }}>
