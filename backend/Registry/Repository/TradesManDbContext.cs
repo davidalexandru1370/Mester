@@ -30,7 +30,6 @@ namespace Registry.Repository
                 .HasForeignKey<TradesMan>(x => x.Id);
 
             modelBuilder.Entity<Specialty>().HasIndex(e => e.Type).IsUnique();
-
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

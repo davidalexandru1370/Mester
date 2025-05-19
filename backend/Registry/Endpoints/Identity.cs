@@ -55,7 +55,6 @@ namespace Registry.Endpoints
             return TypedResults.Ok(token);
         }
 
-
         static async Task<Results<Ok, UnauthorizedHttpResult, Conflict, BadRequest<string>>> CreateTradesManProfile(AuthenticationService authenticationService, TradesManService service, ClaimsPrincipal claims, [FromBody] TradesManDTO tradesManDTO)
         {
             var user = await authenticationService.GetByClaims(claims);
