@@ -1,20 +1,23 @@
-﻿using Registry.Models;
+﻿using Registry.DTO;
+using Registry.Models;
 using Registry.Services.Interfaces;
 
 namespace Registry.Services;
 
-public class DataSeedingService : IDataSeeding
+public class DataSeedingService : IDataSeedingService
 {
-    private IAuthenticationService _authenticationService;
+    private readonly IAuthenticationService _authenticationService;
+    private readonly ITradesManService _tradesManService;
 
-    public DataSeedingService(AuthenticationService authenticationService)
+    public DataSeedingService(IAuthenticationService authenticationService, ITradesManService tradesManService)
     {
-        this._authenticationService = authenticationService;
+        _authenticationService = authenticationService;
+        _tradesManService = tradesManService;
     }
     
     public async Task GenerateData()
     {
-        var specialties = new List<Specialty>
+        var specialties = new List<Speciality>
         {
             new()
             {
@@ -50,7 +53,16 @@ public class DataSeedingService : IDataSeeding
             await _authenticationService.CreateUser("Gigi", "gigi", "0734980123"),
             await _authenticationService.CreateUser("Ferencz", "ferencz", "0776909230")
         };
+
+        await _tradesManService.AddSpecialitiesBulk(specialties);
         
-        
+        foreach (var user in users)
+        {
+            await _tradesManService.UpdateTradesManProfile(user, new TradesManDTO
+            {
+                Description = $"Mesterul {user.Name}",
+                Specialties = specialties.Select(s => s.Type).ToList(),
+            });
+        }
     }
 }

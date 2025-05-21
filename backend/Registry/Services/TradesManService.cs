@@ -4,14 +4,14 @@ using Registry.DTO;
 using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
+using Registry.Services.Interfaces;
 
 namespace Registry.Services
 {
     // TODO: this should be in DTO or contracts?
     public record FilterListTradesMen(List<string>? Specialties);
 
-    [EnableCors("allPolicy")]
-    public class TradesManService
+    public class TradesManService : ITradesManService
     {
         // A bit lazy to create repo for everything...should we use just the context?
         private readonly TradesManDbContext _context;
@@ -21,20 +21,47 @@ namespace Registry.Services
             _context = context;
         }
 
+        public async Task<Speciality> AddSpecialty(Speciality speciality)
+        {
+            try
+            {
+                await _context.Specialties.AddAsync(speciality);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(ex.Message);
+            }
+            return speciality;
+        }
+
+        public async Task<List<Speciality>> AddSpecialitiesBulk(List<Speciality> specialties)
+        {
+            try
+            {
+                await _context.Specialties.AddRangeAsync(specialties);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(ex.Message);
+            }
+            return specialties;
+        }
 
         public async Task<List<string>> GetSpecialities()
         {
             return await _context.Specialties.Select(s => s.Type).ToListAsync();
         }
 
-        public async Task<Specialty?> FindSpeciality(string Type)
+        public async Task<Speciality?> FindSpeciality(string Type)
         {
             return await _context.Specialties.FirstOrDefaultAsync(x => x.Type == Type);
         }
 
-        public async Task<List<Specialty>> GetSpecialitiesByName(IList<string> specialitiesTypeNames)
+        public async Task<List<Speciality>> GetSpecialitiesByName(IList<string> specialitiesTypeNames)
         {
-            var specialities = new List<Specialty>();
+            var specialities = new List<Speciality>();
             var invalidSpecialities = new List<string>();
             foreach (var specialityName in specialitiesTypeNames)
             {

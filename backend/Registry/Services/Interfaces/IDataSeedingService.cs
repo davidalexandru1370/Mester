@@ -1,6 +1,6 @@
 ﻿namespace Registry.Services.Interfaces;
 
-public interface IDataSeeding
+public interface IDataSeedingService
 {
     public Task GenerateData();
 }
