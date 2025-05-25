@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.IdentityModel.Tokens;
 using Registry.Errors.Repositories;
 using Registry.Errors.Services;
 using Registry.Models;
@@ -8,10 +9,12 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Registry.Services.Interfaces;
 
 namespace Registry.Services;
 
-public class AuthenticationService
+[EnableCors("allPolicy")]
+public class AuthenticationService : IAuthenticationService
 {
     private readonly string tokenSecret;
 
@@ -74,7 +77,7 @@ public class AuthenticationService
         return new TokenResponse(jwt, (int)tokenLifetime.TotalSeconds);
     }
 
-    public async Task CreateUser(string username, string password, string phoneNumber)
+    public async Task<User> CreateUser(string username, string password, string phoneNumber)
     {
         var salt = Guid.NewGuid().ToString();
 
@@ -88,7 +91,7 @@ public class AuthenticationService
         };
         try
         {
-            await _repoUsers.Add(user);
+            return await _repoUsers.Add(user);
         }
         catch (ConflictException e)
         {

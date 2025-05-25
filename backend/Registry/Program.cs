@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Registry;
-using Registry.Endpoints;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 
@@ -49,8 +48,6 @@ builder.Services.AddAntiforgery(setup =>
     setup.SuppressXFrameOptionsHeader = true;
 });
 
-
-
 var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -60,11 +57,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
+app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().SetIsOriginAllowed(origin => true).AllowCredentials());
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseIdentityRoutes();
 app.MapControllers();
 
 app.UseAntiforgery();

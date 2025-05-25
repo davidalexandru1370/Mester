@@ -13,16 +13,17 @@ namespace Registry.Repository
             _context = context;
         }
 
-        public async Task Add(User user)
+        public async Task<User> Add(User user)
         {
             try
             {
-                await _context.Users.AddAsync(user);
+                var createdUser = await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
+                
+                return createdUser.Entity;
             }
             catch (DbUpdateException e)
             {
-
                 throw RepositoryException.From(e);
             }
         }

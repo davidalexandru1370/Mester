@@ -16,7 +16,8 @@ namespace Registry.Repository
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Job> Jobs { get; set; }
         public virtual DbSet<Review> Reviews { get; set; }
-        public virtual DbSet<Specialty> Specialties { get; set; }
+        public virtual DbSet<Speciality> Specialties { get; set; }
+        public virtual DbSet<TradesManSpecialities> TradesManSpecialities { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -29,8 +30,20 @@ namespace Registry.Repository
                 .WithOne().OnDelete(DeleteBehavior.Restrict)
                 .HasForeignKey<TradesMan>(x => x.Id);
 
-            modelBuilder.Entity<Specialty>().HasIndex(e => e.Type).IsUnique();
+            modelBuilder.Entity<Speciality>().HasIndex(e => e.Type).IsUnique();
 
+            modelBuilder.Entity<TradesManSpecialities>()
+                .HasKey(e => new { e.TradesManId, e.SpecialityId });
+
+            modelBuilder.Entity<TradesManSpecialities>()
+                .HasOne(e => e.TradesMan)
+                .WithMany(s => s.Specialities)
+                .HasForeignKey(e => e.TradesManId);
+
+            modelBuilder.Entity<TradesManSpecialities>()
+                .HasOne(e => e.Speciality)
+                .WithMany(c => c.TradesMenSpecialities)
+                .HasForeignKey(e => e.SpecialityId);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

@@ -4,14 +4,14 @@ using Registry.DTO;
 using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
+using Registry.Services.Interfaces;
 
 namespace Registry.Services
 {
     // TODO: this should be in DTO or contracts?
     public record FilterListTradesMen(List<string>? Specialties);
 
-    [EnableCors("allPolicy")]
-    public class TradesManService
+    public class TradesManService : ITradesManService
     {
         // A bit lazy to create repo for everything...should we use just the context?
         private readonly TradesManDbContext _context;
@@ -21,20 +21,47 @@ namespace Registry.Services
             _context = context;
         }
 
+        public async Task<Speciality> AddSpecialty(Speciality speciality)
+        {
+            try
+            {
+                await _context.Specialties.AddAsync(speciality);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(ex.Message);
+            }
+            return speciality;
+        }
+
+        public async Task<List<Speciality>> AddSpecialitiesBulk(List<Speciality> specialties)
+        {
+            try
+            {
+                await _context.Specialties.AddRangeAsync(specialties);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException(ex.Message);
+            }
+            return specialties;
+        }
 
         public async Task<List<string>> GetSpecialities()
         {
             return await _context.Specialties.Select(s => s.Type).ToListAsync();
         }
 
-        public async Task<Specialty?> FindSpeciality(string Type)
+        public async Task<Speciality?> FindSpeciality(string Type)
         {
             return await _context.Specialties.FirstOrDefaultAsync(x => x.Type == Type);
         }
 
-        public async Task<List<Specialty>> GetSpecialitiesByName(IList<string> specialitiesTypeNames)
+        public async Task<List<Speciality>> GetSpecialitiesByName(IList<string> specialitiesTypeNames)
         {
-            var specialities = new List<Specialty>();
+            var specialities = new List<Speciality>();
             var invalidSpecialities = new List<string>();
             foreach (var specialityName in specialitiesTypeNames)
             {
@@ -57,9 +84,24 @@ namespace Registry.Services
 
         public async Task UpdateTradesManProfile(User user, TradesManDTO tradesManDTO)
         {
-            var specialities = await GetSpecialitiesByName(tradesManDTO.Specialties);
+            var specialities = (await GetSpecialitiesByName(tradesManDTO.Specialities.Select(s => s.Name).ToList())).Select((s, index) => new TradesManSpecialities
+            {
+                Price = tradesManDTO.Specialities[index].Price,
+                SpecialityId = s.Id,
+                TradesManId = user.Id,
+                UnitOfMeasure = tradesManDTO.Specialities[index].UnitOfMeasure
+            }).ToList();
 
-            user.TradesManProfile = new TradesMan { Specialties = specialities, Description = tradesManDTO.Description };
+            await _context.TradesManSpecialities.AddRangeAsync(specialities);
+
+            user.TradesManProfile = new TradesMan
+            {
+                Specialities = specialities,
+                Description = tradesManDTO.Description,
+                City = tradesManDTO.City,
+                County = tradesManDTO.County
+            };
+
             _context.Update(user);
             await _context.SaveChangesAsync();
         }
@@ -68,20 +110,32 @@ namespace Registry.Services
         {
             //TODO: add sorting based on rating
             var query = _context.Users.Include(x => x.TradesManProfile)
-                .ThenInclude(x => x.Specialties)
+                .ThenInclude(x => x.Specialities)
                 .Where(x => x.TradesManProfile != null);
+
             if (filter.Specialties is not null)
             {
-                query = query.Where(x => x.TradesManProfile!.Specialties.Select(x => x.Type)
-                    .Any(x => filter.Specialties.Any(y => x == y)));
+                query = query.Where(x => x.TradesManProfile!.Specialities.Select(x => x.Speciality)
+                    .Any(x => filter.Specialties.Any(y => x.Type == y)));
             }
+
             return await query
                 .Select(x => new TradesManListDTO
                 {
                     Id = x.Id,
                     Description = x.TradesManProfile!.Description,
                     Name = x.Name,
-                    Specialities = x.TradesManProfile!.Specialties.Select(x => x.Type).ToList()
+                    City = x.TradesManProfile.City,
+                    County = x.TradesManProfile.County,
+                    Specialities = x.TradesManProfile!.Specialities.Select(x => new SpecialityDTO
+                    {
+                        SpecialityId = x.SpecialityId,
+                        TradesManId = x.TradesManId,
+                        Price = x.Price,
+                        Type = x.Speciality.Type,
+                        UnitOfMeasure = x.UnitOfMeasure,
+                        ImageUrl = x.Speciality.ImageUrl,
+                    }).ToList()
                 })
                 .ToListAsync();
         }
@@ -89,7 +143,7 @@ namespace Registry.Services
         public async Task<TradesManInfoPageDTO?> GetTradesManInfo(Guid id)
         {
             var r = await _context.Users.Include(x => x.TradesManProfile)
-                .ThenInclude(x => x.Specialties)
+                .ThenInclude(x => x.Specialities)
                 .Where(x => x.TradesManProfile != null)
                 .FirstAsync(x => x.Id == id);
 
@@ -99,8 +153,18 @@ namespace Registry.Services
             {
                 Id = r.Id,
                 Name = r.Name,
+                City = r.TradesManProfile!.City,
+                County = r.TradesManProfile!.County,
                 Description = r.TradesManProfile!.Description,
-                Specialities = r.TradesManProfile.Specialties.Select(x => x.Type).ToList()
+                Specialities = r.TradesManProfile.Specialities.Select(x => new SpecialityDTO
+                {
+                    SpecialityId = x.SpecialityId,
+                    TradesManId = x.TradesManId,
+                    Price = x.Price,
+                    Type = x.Speciality.Type,
+                    UnitOfMeasure = x.UnitOfMeasure,
+                    ImageUrl = x.Speciality.ImageUrl,
+                }).ToList()
             };
         }
     }
