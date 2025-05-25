@@ -1,5 +1,7 @@
 export interface Speciality {
-  id: string;
+  specialityId: string;
   type: string;
   imageUrl: string;
+  price: number;
+  unitOfMeasure: string;
 }

@@ -116,25 +116,22 @@ export default function MainPage() {
       </Container>
       <h1>Ofertele curente</h1>
       <br></br>
-
-      {tradesmen?.map(function fn(tradesman: TradesManDto) {
-        return (
-          <ServiceTypeCard
-            key={tradesman.id}
-            title={tradesman.name}
-            price={tradesman.price}
-            imagesUrl={tradesman}
-            location={{
-              value: tradesman.city,
-              displayLabel: tradesman.city,
-              county: {
-                value: tradesman.county,
-                displayLabel: tradesman.county,
-              },
-            }}
-          />
-        );
-      })}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-2 gap-4">
+        {tradesmen?.map(function fn(tradesman: TradesManDto) {
+          return (
+            <div
+              className="m-10 border border-gray-300 rounded-lg p-4"
+              key={tradesman.id}
+            >
+              <ServiceTypeCard
+                key={tradesman.id}
+                title={tradesman.name}
+                specialities={tradesman.specialities}
+              />
+            </div>
+          );
+        })}
+      </div>
     </section>
   );
 }

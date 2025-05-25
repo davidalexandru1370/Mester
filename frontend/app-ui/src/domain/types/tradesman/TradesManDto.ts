@@ -4,5 +4,7 @@ export interface TradesManDto {
   id: string;
   name: string;
   description: string;
+  city: string;
+  county: string;
   specialities: Speciality[];
 }
