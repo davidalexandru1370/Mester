@@ -1,4 +1,6 @@
-﻿namespace Registry.DTO
+﻿using Registry.Models;
+
+namespace Registry.DTO
 {
     public class TradesManListDTO
     {
@@ -6,6 +8,6 @@
         public required Guid Id { get; set; }
         public required string Name { get; set; }
         public required string Description { get; set; }
-        public required List<string> Specialities { get; set; }
+        public required List<Speciality> Specialities { get; set; }
     }
 }
