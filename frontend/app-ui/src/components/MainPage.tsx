@@ -20,6 +20,7 @@ import {
   SearchTradesManFilters,
 } from "@/domain/types/filters.ts";
 import ServiceTypeCard from "./internal/serviceTypeCard.tsx";
+import { TradesManDto } from "@/domain/types/tradesman/TradesManDto.ts";
 
 function updateFiltersReducer(
   state: SearchTradesManFilters,
@@ -116,13 +117,13 @@ export default function MainPage() {
       <h1>Ofertele curente</h1>
       <br></br>
 
-      {tradesmen?.map(function fn(tradesman: any) {
+      {tradesmen?.map(function fn(tradesman: TradesManDto) {
         return (
           <ServiceTypeCard
             key={tradesman.id}
             title={tradesman.name}
             price={tradesman.price}
-            imageUrl=""
+            imagesUrl={tradesman}
             location={{
               value: tradesman.city,
               displayLabel: tradesman.city,

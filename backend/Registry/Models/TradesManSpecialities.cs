@@ -4,8 +4,6 @@ namespace Registry.Models
 {
     public class TradesManSpecialities
     {
-        [Key]
-        public Guid Id { get; set; }
         public Guid TradesManId { get; set; }
         public Guid SpecialityId { get; set; }
         public TradesMan TradesMan { get; set; }

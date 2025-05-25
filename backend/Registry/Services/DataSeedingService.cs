@@ -17,7 +17,8 @@ public class DataSeedingService : IDataSeedingService
 
     public async Task GenerateData()
     {
-        var specialties = new List<Speciality>
+        var random = new Random();
+        var specialities = new List<Speciality>
         {
             new()
             {
@@ -59,14 +60,21 @@ public class DataSeedingService : IDataSeedingService
             await _authenticationService.CreateUser("Ferencz", "ferencz", "0776909230")
         };
 
-        await _tradesManService.AddSpecialitiesBulk(specialties);
+        await _tradesManService.AddSpecialitiesBulk(specialities);
 
         foreach (var user in users)
         {
             await _tradesManService.UpdateTradesManProfile(user, new TradesManDTO
             {
                 Description = $"Mesterul {user.Name}",
-                Specialties = specialties.Select(s => s.Type).ToList(),
+                City = "Cluj-Napoca",
+                County = "Cluj",
+                Specialities = specialities.OrderBy(x => random.Next()).Take(random.Next(1, specialities.Count)).Select(s => new AssignSpecialityDTO
+                {
+                    Name = s.Type,
+                    UnitOfMeasure = "metru patrat",
+                    Price = (uint)random.Next(1, 500),
+                }).ToList(),
             });
         }
     }

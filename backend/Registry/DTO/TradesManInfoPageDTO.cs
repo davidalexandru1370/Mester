@@ -7,7 +7,9 @@ namespace Registry.DTO
         public required Guid Id { get; set; }
         public required string Name { get; set; }
         public required string Description { get; set; }
-        public required List<Speciality> Specialities { get; set; }
+        public string City { get; set; }
+        public string County { get; set; }
+        public required List<SpecialityDTO> Specialities { get; set; }
 
         // TODO: add profile picture, add photo carousel, reviews
     }

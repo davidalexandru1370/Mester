@@ -84,9 +84,24 @@ namespace Registry.Services
 
         public async Task UpdateTradesManProfile(User user, TradesManDTO tradesManDTO)
         {
-            var specialities = await GetSpecialitiesByName(tradesManDTO.Specialties);
+            var specialities = (await GetSpecialitiesByName(tradesManDTO.Specialities.Select(s => s.Name).ToList())).Select((s, index) => new TradesManSpecialities
+            {
+                Price = tradesManDTO.Specialities[index].Price,
+                SpecialityId = s.Id,
+                TradesManId = user.Id,
+                UnitOfMeasure = tradesManDTO.Specialities[index].UnitOfMeasure
+            }).ToList();
 
-            //user.TradesManProfile = new TradesMan { Specialties = specialities, Description = tradesManDTO.Description };
+            await _context.TradesManSpecialities.AddRangeAsync(specialities);
+
+            user.TradesManProfile = new TradesMan
+            {
+                Specialities = specialities,
+                Description = tradesManDTO.Description,
+                City = tradesManDTO.City,
+                County = tradesManDTO.County
+            };
+
             _context.Update(user);
             await _context.SaveChangesAsync();
         }
@@ -110,7 +125,17 @@ namespace Registry.Services
                     Id = x.Id,
                     Description = x.TradesManProfile!.Description,
                     Name = x.Name,
-                    Specialities = x.TradesManProfile!.Specialities.Select(x => x.Speciality).ToList()
+                    City = x.TradesManProfile.City,
+                    County = x.TradesManProfile.County,
+                    Specialities = x.TradesManProfile!.Specialities.Select(x => new SpecialityDTO
+                    {
+                        SpecialityId = x.SpecialityId,
+                        TradesManId = x.TradesManId,
+                        Price = x.Price,
+                        Type = x.Speciality.Type,
+                        UnitOfMeasure = x.UnitOfMeasure,
+                        ImageUrl = x.Speciality.ImageUrl,
+                    }).ToList()
                 })
                 .ToListAsync();
         }
@@ -128,8 +153,18 @@ namespace Registry.Services
             {
                 Id = r.Id,
                 Name = r.Name,
+                City = r.TradesManProfile!.City,
+                County = r.TradesManProfile!.County,
                 Description = r.TradesManProfile!.Description,
-                Specialities = r.TradesManProfile.Specialities.Select(x => x.Speciality).ToList()
+                Specialities = r.TradesManProfile.Specialities.Select(x => new SpecialityDTO
+                {
+                    SpecialityId = x.SpecialityId,
+                    TradesManId = x.TradesManId,
+                    Price = x.Price,
+                    Type = x.Speciality.Type,
+                    UnitOfMeasure = x.UnitOfMeasure,
+                    ImageUrl = x.Speciality.ImageUrl,
+                }).ToList()
             };
         }
     }
