@@ -49,5 +49,20 @@ namespace Registry.Repository
                 .FirstOrDefaultAsync();
             return user;
         }
+
+        public async Task<User> GetUserById(Guid userId)
+        {
+            var user = await _context.Users
+                .Where(u => u.Id == userId)
+                .Include (u => u.TradesManProfile)
+                .FirstOrDefaultAsync();
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
+
+            return user;
+        }
     }
 }

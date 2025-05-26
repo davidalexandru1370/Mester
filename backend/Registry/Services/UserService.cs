@@ -10,18 +10,19 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Registry.Services.Interfaces;
+using Registry.DTO;
 
 namespace Registry.Services;
 
 [EnableCors("allPolicy")]
-public class AuthenticationService : IAuthenticationService
+public class UserService : IUserService
 {
     private readonly string tokenSecret;
 
     private readonly TimeSpan tokenLifetime;
     private readonly IRepositoryUser _repoUsers;
 
-    public AuthenticationService(IRepositoryUser repoUsers, string tokenSecret, TimeSpan tokenLifetime)
+    public UserService(IRepositoryUser repoUsers, string tokenSecret, TimeSpan tokenLifetime)
     {
         this.tokenSecret = tokenSecret;
         this.tokenLifetime = tokenLifetime;
@@ -138,5 +139,16 @@ public class AuthenticationService : IAuthenticationService
             return null;
         }
         return user;
+    }
+
+    public async Task<UserDetailsDto> GetUserDetailsById(Guid userId)
+    {
+        var user = await _repoUsers.GetUserById(userId);
+        return new UserDetailsDto
+        {
+            Name = user.Name,
+            Id = user.Id,
+            IsTradesman = !(user.TradesManProfile is null)
+        };
     }
 }

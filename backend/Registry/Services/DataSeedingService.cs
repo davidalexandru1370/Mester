@@ -6,10 +6,10 @@ namespace Registry.Services;
 
 public class DataSeedingService : IDataSeedingService
 {
-    private readonly IAuthenticationService _authenticationService;
+    private readonly IUserService _authenticationService;
     private readonly ITradesManService _tradesManService;
 
-    public DataSeedingService(IAuthenticationService authenticationService, ITradesManService tradesManService)
+    public DataSeedingService(IUserService authenticationService, ITradesManService tradesManService)
     {
         _authenticationService = authenticationService;
         _tradesManService = tradesManService;

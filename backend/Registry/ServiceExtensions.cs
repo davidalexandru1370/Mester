@@ -1,4 +1,6 @@
-﻿using FluentValidation;
+﻿using System.Net;
+using FluentValidation;
+using Registry.Errors.Repositories;
 using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
@@ -21,9 +23,9 @@ namespace Registry
 
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
         {
-            return services.AddScoped<IAuthenticationService>(x =>
+            return services.AddScoped<IUserService>(x =>
                 {
-                    return ActivatorUtilities.CreateInstance<AuthenticationService>(x,
+                    return ActivatorUtilities.CreateInstance<UserService>(x,
                         config["JwtSettings:Key"] ?? throw new Exception("No key specified"),
                         TimeSpan.FromHours(1));
                 })
@@ -54,7 +56,15 @@ namespace Registry
                         message = ex.Message
                     });
                 }
-                catch (ServiceException ex)
+                catch (NotFoundException ex)
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        message = ex.Message
+                    });
+                }
+                catch (Exception ex) when (ex is ServiceException || ex is ApplicationException)
                 {
                     context.Response.StatusCode = 500;
                     await context.Response.WriteAsJsonAsync(new
