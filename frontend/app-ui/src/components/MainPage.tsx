@@ -1,7 +1,8 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 import NavMenu from "./NavMenu.tsx";
-import OfferWindow from "./OfferWindow.tsx";
 import axios from "axios";
+import useToken from './useToken.tsx';
+import { useNavigate } from "react-router-dom";
 import { Container } from "reactstrap";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -53,8 +54,15 @@ export default function MainPage() {
   const [tradesmen, setTradesmen] = useState<any>([]);
   const [filters, updateFilters] = useReducer(updateFiltersReducer, {});
   const { counties } = useContext(DataStoreContext);
+  const { token, setToken } = useToken();
+  let navigate = useNavigate();
 
   useEffect(() => {
+    if(!token)
+        {
+            navigate("/auth");
+            return;
+        }
     (async () => await Load())();
   }, []);
 
