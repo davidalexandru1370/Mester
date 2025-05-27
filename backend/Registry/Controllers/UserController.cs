@@ -30,7 +30,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            await _authenticationService.CreateUser(request.Email, request.Password, request.PhoneNumber);
+            await _authenticationService.CreateUser(request.Email, request.Password, request.PhoneNumber, request.Email);
             return TypedResults.Ok();
         }
         catch (NameAlreadyUsedException)
@@ -42,8 +42,7 @@ public class UserController : ControllerBase
     [HttpPost("login")]
     public async Task<Results<Ok<TokenResponse>, UnauthorizedHttpResult>> Login([FromBody] LoginUserRequest loginUserData)
     {
-        
-        var user = await _authenticationService.LoginUser(loginUserData.Username, loginUserData.Password);
+        var user = await _authenticationService.LoginUser(loginUserData.Email, loginUserData.Password);
         if (user is null)
         {
             return TypedResults.Unauthorized();
@@ -51,7 +50,7 @@ public class UserController : ControllerBase
 
         var token = _authenticationService.CreateToken(new TokenRegistrationRequest
         {
-            Email = loginUserData.Username,
+            Email = loginUserData.Email,
             CustomClaims = []
         });
         return TypedResults.Ok(token);

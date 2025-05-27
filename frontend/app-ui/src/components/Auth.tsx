@@ -28,7 +28,7 @@ export default function () {
     try {
       await axios
         .post(
-          "https://localhost:8081/identity/login",
+          "https://localhost:8081/api/user/login",
           {
             email: email,
             password: password,
@@ -61,7 +61,7 @@ export default function () {
     try {
       await axios
         .post(
-          "https://localhost:8081/identity/createAccount",
+          "https://localhost:8081/api/user/createAccount",
           {
             email: email,
             password: password,

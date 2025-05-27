@@ -41,10 +41,10 @@ namespace Registry.Repository
             }
         }
 
-        public async Task<User?> FindByUsername(string username)
+        public async Task<User?> FindByUsername(string email)
         {
             var user = await _context.Users
-                .Where(x => x.Name == username)
+                .Where(x => x.Name == email)
                 .Include(x => x.TradesManProfile)
                 .FirstOrDefaultAsync();
             return user;

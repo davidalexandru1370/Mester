@@ -5,17 +5,16 @@ import axios from "axios";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   redirectPath?: string;
-  authEndpoint: string; // e.g., "/api/auth/check"
 }
 
 export default function ProtectedRoute({
   children,
-  redirectPath = "/login",
-  authEndpoint,
+  redirectPath = "/auth",
 }: ProtectedRouteProps) {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const authEndpoint: string = "https://localhost:8081/api/user/authorize";
 
   useEffect(() => {
     const checkAuth = async () => {

@@ -78,7 +78,7 @@ public class UserService : IUserService
         return new TokenResponse(jwt, (int)tokenLifetime.TotalSeconds);
     }
 
-    public async Task<User> CreateUser(string username, string password, string phoneNumber)
+    public async Task<User> CreateUser(string username, string password, string phoneNumber, string email)
     {
         var salt = Guid.NewGuid().ToString();
 
@@ -86,6 +86,7 @@ public class UserService : IUserService
         var user = new User
         {
             HashPassword = passwordHashed,
+            Email = email,
             Salt = salt,
             Name = username,
             PhoneNumber = phoneNumber,
@@ -123,12 +124,12 @@ public class UserService : IUserService
     /// <summary>
     /// Returns the user if the login is valid or null otherwise
     /// </summary>
-    /// <param name="username"></param>
+    /// <param name="email"></param>
     /// <param name="password"></param>
     /// <returns></returns>
-    public async Task<User?> LoginUser(string username, string password)
+    public async Task<User?> LoginUser(string email, string password)
     {
-        var user = await _repoUsers.FindByUsername(username);
+        var user = await _repoUsers.FindByUsername(email);
         if (user is null)
         {
             return null;

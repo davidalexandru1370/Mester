@@ -54,10 +54,10 @@ public class DataSeedingService : IDataSeedingService
 
         var users = new List<User>
         {
-            await _authenticationService.CreateUser("Vasile", "vasile", "0734980910"),
-            await _authenticationService.CreateUser("Ioan", "ioan", "0734934910"),
-            await _authenticationService.CreateUser("Gigi", "gigi", "0734980123"),
-            await _authenticationService.CreateUser("Ferencz", "ferencz", "0776909230")
+            await _authenticationService.CreateUser("Vasile", "vasile", "0734980910", "vasile@gmail.com"),
+            await _authenticationService.CreateUser("Ioan", "ioan", "0734934910", "ioan@gmail.com"),
+            await _authenticationService.CreateUser("Gigi", "gigi", "0734980123", "gigi@gmail.com"),
+            await _authenticationService.CreateUser("Ferencz", "ferencz", "0776909230", "ferencz@gmail.com")
         };
 
         await _tradesManService.AddSpecialitiesBulk(specialities);
