@@ -72,16 +72,17 @@ namespace Registry.Migrations
                     b.ToTable("Reviews");
                 });
 
-            modelBuilder.Entity("Registry.Models.Specialty", b =>
+            modelBuilder.Entity("Registry.Models.Speciality", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("JobId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("TradesManId")
+                    b.Property<Guid?>("JobId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Type")
@@ -91,8 +92,6 @@ namespace Registry.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("JobId");
-
-                    b.HasIndex("TradesManId");
 
                     b.HasIndex("Type")
                         .IsUnique();
@@ -105,6 +104,14 @@ namespace Registry.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("County")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -112,6 +119,28 @@ namespace Registry.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("TradesMan");
+                });
+
+            modelBuilder.Entity("Registry.Models.TradesManSpecialities", b =>
+                {
+                    b.Property<Guid>("TradesManId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("SpecialityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long>("Price")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("TradesManId", "SpecialityId");
+
+                    b.HasIndex("SpecialityId");
+
+                    b.ToTable("TradesManSpecialities");
                 });
 
             modelBuilder.Entity("Registry.Models.User", b =>
@@ -171,15 +200,11 @@ namespace Registry.Migrations
                     b.Navigation("Job");
                 });
 
-            modelBuilder.Entity("Registry.Models.Specialty", b =>
+            modelBuilder.Entity("Registry.Models.Speciality", b =>
                 {
                     b.HasOne("Registry.Models.Job", null)
                         .WithMany("JobTypes")
                         .HasForeignKey("JobId");
-
-                    b.HasOne("Registry.Models.TradesMan", null)
-                        .WithMany("Specialties")
-                        .HasForeignKey("TradesManId");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
@@ -191,14 +216,38 @@ namespace Registry.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Registry.Models.TradesManSpecialities", b =>
+                {
+                    b.HasOne("Registry.Models.Speciality", "Speciality")
+                        .WithMany("TradesMenSpecialities")
+                        .HasForeignKey("SpecialityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Registry.Models.TradesMan", "TradesMan")
+                        .WithMany("Specialities")
+                        .HasForeignKey("TradesManId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Speciality");
+
+                    b.Navigation("TradesMan");
+                });
+
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
                     b.Navigation("JobTypes");
                 });
 
+            modelBuilder.Entity("Registry.Models.Speciality", b =>
+                {
+                    b.Navigation("TradesMenSpecialities");
+                });
+
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
                 {
-                    b.Navigation("Specialties");
+                    b.Navigation("Specialities");
                 });
 
             modelBuilder.Entity("Registry.Models.User", b =>

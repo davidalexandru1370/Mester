@@ -3,6 +3,7 @@ using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
 using Registry.Services;
+using Registry.Services.Interfaces;
 using Registry.Validator;
 
 namespace Registry
@@ -20,13 +21,15 @@ namespace Registry
 
         public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration config)
         {
-            return services.AddScoped(x =>
-            {
-                return ActivatorUtilities.CreateInstance<AuthenticationService>(x,
-                    config["JwtSettings:Key"] ?? throw new Exception("No key specified"),
-                    TimeSpan.FromHours(1));
-            })
-            .AddScoped<TradesManService>();
+            return services.AddScoped<IAuthenticationService>(x =>
+                {
+                    return ActivatorUtilities.CreateInstance<AuthenticationService>(x,
+                        config["JwtSettings:Key"] ?? throw new Exception("No key specified"),
+                        TimeSpan.FromHours(1));
+                })
+                .AddScoped<ITradesManService, TradesManService>()
+                .AddScoped<IImageService, ImageService>()
+                .AddScoped<IDataSeedingService, DataSeedingService>();
         }
 
         public static IServiceCollection AddValidators(this IServiceCollection services)

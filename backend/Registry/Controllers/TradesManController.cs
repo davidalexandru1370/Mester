@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Registry.DTO;
 using Registry.Services;
+using Registry.Services.Interfaces;
 
 namespace Registry.Controllers
 {
@@ -9,9 +10,9 @@ namespace Registry.Controllers
     [ApiController]
     public class TradesManController : ControllerBase
     {
-        private TradesManService _service;
+        private ITradesManService _service;
 
-        public TradesManController(TradesManService service)
+        public TradesManController(ITradesManService service)
         {
             _service = service;
         }
@@ -30,4 +31,6 @@ namespace Registry.Controllers
             return Ok(r);
         }
     }
+    
+    
 }
