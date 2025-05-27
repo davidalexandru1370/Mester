@@ -108,4 +108,11 @@ public class UserController : ControllerBase
 
         return Ok(foundUser);
     }
+    
+    [Authorize]
+    [HttpGet("authorize")]
+    public IActionResult Authorize()
+    {
+        return Ok();
+    }
 }
