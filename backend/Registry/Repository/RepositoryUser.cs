@@ -41,12 +41,27 @@ namespace Registry.Repository
             }
         }
 
-        public async Task<User?> FindByUsername(string username)
+        public async Task<User?> FindByUsername(string email)
         {
             var user = await _context.Users
-                .Where(x => x.Name == username)
+                .Where(x => x.Name == email)
                 .Include(x => x.TradesManProfile)
                 .FirstOrDefaultAsync();
+            return user;
+        }
+
+        public async Task<User> GetUserById(Guid userId)
+        {
+            var user = await _context.Users
+                .Where(u => u.Id == userId)
+                .Include (u => u.TradesManProfile)
+                .FirstOrDefaultAsync();
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
+
             return user;
         }
     }

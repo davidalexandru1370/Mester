@@ -10,18 +10,19 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Registry.Services.Interfaces;
+using Registry.DTO;
 
 namespace Registry.Services;
 
 [EnableCors("allPolicy")]
-public class AuthenticationService : IAuthenticationService
+public class UserService : IUserService
 {
     private readonly string tokenSecret;
 
     private readonly TimeSpan tokenLifetime;
     private readonly IRepositoryUser _repoUsers;
 
-    public AuthenticationService(IRepositoryUser repoUsers, string tokenSecret, TimeSpan tokenLifetime)
+    public UserService(IRepositoryUser repoUsers, string tokenSecret, TimeSpan tokenLifetime)
     {
         this.tokenSecret = tokenSecret;
         this.tokenLifetime = tokenLifetime;
@@ -77,7 +78,7 @@ public class AuthenticationService : IAuthenticationService
         return new TokenResponse(jwt, (int)tokenLifetime.TotalSeconds);
     }
 
-    public async Task<User> CreateUser(string username, string password, string phoneNumber)
+    public async Task<User> CreateUser(string username, string password, string phoneNumber, string email)
     {
         var salt = Guid.NewGuid().ToString();
 
@@ -85,6 +86,7 @@ public class AuthenticationService : IAuthenticationService
         var user = new User
         {
             HashPassword = passwordHashed,
+            Email = email,
             Salt = salt,
             Name = username,
             PhoneNumber = phoneNumber,
@@ -122,12 +124,12 @@ public class AuthenticationService : IAuthenticationService
     /// <summary>
     /// Returns the user if the login is valid or null otherwise
     /// </summary>
-    /// <param name="username"></param>
+    /// <param name="email"></param>
     /// <param name="password"></param>
     /// <returns></returns>
-    public async Task<User?> LoginUser(string username, string password)
+    public async Task<User?> LoginUser(string email, string password)
     {
-        var user = await _repoUsers.FindByUsername(username);
+        var user = await _repoUsers.FindByUsername(email);
         if (user is null)
         {
             return null;
@@ -138,5 +140,16 @@ public class AuthenticationService : IAuthenticationService
             return null;
         }
         return user;
+    }
+
+    public async Task<UserDetailsDto> GetUserDetailsById(Guid userId)
+    {
+        var user = await _repoUsers.GetUserById(userId);
+        return new UserDetailsDto
+        {
+            Name = user.Name,
+            Id = user.Id,
+            IsTradesman = !(user.TradesManProfile is null)
+        };
     }
 }

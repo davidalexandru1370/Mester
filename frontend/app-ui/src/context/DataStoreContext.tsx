@@ -1,4 +1,4 @@
-import { County, City, CountyWithCities } from "@/domain/types/localization";
+import { City, CountyWithCities } from "@/domain/types/localization";
 import { createContext, FC, useState } from "react";
 import * as counties from "@/assets/data/regions.json";
 

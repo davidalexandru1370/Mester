@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import useToken from './useToken';
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import useToken from "./useToken";
 
 export default function () {
-  let [authMode, setAuthMode] = useState("signin")
+  let [authMode, setAuthMode] = useState("signin");
 
   const changeAuthMode = () => {
-    setAuthMode(authMode === "signin" ? "signup" : "signin")
-  }
+    setAuthMode(authMode === "signin" ? "signup" : "signin");
+  };
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,70 +21,73 @@ export default function () {
 
   const { token, setToken } = useToken();
 
-  useEffect(() => {
-  }, []);
+  useEffect(() => {}, []);
 
-  async function login(event: { preventDefault: () => void; }) {
-
+  async function login(event: { preventDefault: () => void }) {
     event.preventDefault();
     try {
-        await axios.post("https://localhost:8081/identity/login", {
-
+      await axios
+        .post(
+          "https://localhost:8081/api/user/login",
+          {
             email: email,
             password: password,
-
-        }, {
+          },
+          {
             timeout: 5000,
             headers: {
-                'Content-Type': 'multipart/form-data',
-                accept: 'application/json', // If you receieve JSON response.
-            }
-        }).then(function (response) {
+              "Content-Type": "application/json",
+              accept: "application/json", // If you receieve JSON response.
+            },
+          }
+        )
+        .then(function (response) {
           const access = response.data.jwt;
           setToken(access);
           console.log(response.data.jwt);
-      });
+        });
       navigate("/main");
-
     } catch (err) {
-        let errorMessage = "Failed to do something exceptional";
-    if (err instanceof Error) {
+      let errorMessage = "Failed to do something exceptional";
+      if (err instanceof Error) {
         errorMessage = err.message;
+      }
+      toast(errorMessage);
     }
-    toast(errorMessage);
-    }
-}
-
-async function register(event: { preventDefault: () => void; }) {
-
-  event.preventDefault();
-  try {
-      await axios.post("https://localhost:8081/identity/createAccount", {
-
-          email: email,
-          password: password,
-          phoneNumber: phoneNumber,
-
-      }, {
-        timeout: 5000,
-        headers: {
-            'Content-Type': 'multipart/form-data',
-            accept: 'application/json', // If you receieve JSON response.
-        }
-    }).then(function (response) {
-        currentId = response.data.success;
-        console.log(response.data.success);
-    });
-    changeAuthMode();
-
-  } catch (err) {
-    let errorMessage = "Failed to do something exceptional";
-    if (err instanceof Error) {
-        errorMessage = err.message;
-    }
-    toast(errorMessage);
   }
-}
+
+  async function register(event: { preventDefault: () => void }) {
+    event.preventDefault();
+    try {
+      await axios
+        .post(
+          "https://localhost:8081/api/user/createAccount",
+          {
+            email: email,
+            password: password,
+            phoneNumber: phoneNumber,
+          },
+          {
+            timeout: 5000,
+            headers: {
+              "Content-Type": "application/json",
+              accept: "application/json", // If you receieve JSON response.
+            },
+          }
+        )
+        .then(function (response) {
+          currentId = response.data.success;
+          console.log(response.data.success);
+        });
+      changeAuthMode();
+    } catch (err) {
+      let errorMessage = "Failed to do something exceptional";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      toast(errorMessage);
+    }
+  }
 
   if (authMode === "signin") {
     return (
@@ -99,14 +102,14 @@ async function register(event: { preventDefault: () => void; }) {
               </span>
             </div>
             <div className="form-group mt-3">
-            <label>Email address</label>
-            <input
-              type="email"
-              className="form-control mt-1"
-              placeholder="Email Address"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
+              <label>Email address</label>
+              <input
+                type="email"
+                className="form-control mt-1"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="form-group mt-3">
               <label>Password</label>
@@ -115,7 +118,7 @@ async function register(event: { preventDefault: () => void; }) {
                 className="form-control mt-1"
                 placeholder="Enter password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <div className="d-grid gap-2 mt-3">
@@ -127,7 +130,7 @@ async function register(event: { preventDefault: () => void; }) {
         </form>
         <ToastContainer />
       </div>
-    )
+    );
   }
 
   return (
@@ -148,7 +151,7 @@ async function register(event: { preventDefault: () => void; }) {
               className="form-control mt-1"
               placeholder="Email Address"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="form-group mt-3">
@@ -158,7 +161,7 @@ async function register(event: { preventDefault: () => void; }) {
               className="form-control mt-1"
               placeholder="Password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <div className="form-group mt-3">
@@ -168,11 +171,15 @@ async function register(event: { preventDefault: () => void; }) {
               className="form-control mt-1"
               placeholder="e.g Doe"
               value={phoneNumber}
-              onChange={e => setPhoneNumber(e.target.value)}
+              onChange={(e) => setPhoneNumber(e.target.value)}
             />
           </div>
           <div className="d-grid gap-2 mt-3">
-            <button type="submit" className="btn btn-primary" onClick={register}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              onClick={register}
+            >
               Submit
             </button>
           </div>
@@ -180,5 +187,5 @@ async function register(event: { preventDefault: () => void; }) {
       </form>
       <ToastContainer />
     </div>
-  )
+  );
 }
