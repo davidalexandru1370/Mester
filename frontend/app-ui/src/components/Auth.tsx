@@ -96,7 +96,7 @@ export default function () {
           <div className="Auth-form-content">
             <h3 className="Auth-form-title">Sign In</h3>
             <div className="text-center">
-              Not registered yet?{" "}
+              Not registered yet?
               <span className="link-primary" onClick={changeAuthMode}>
                 Sign Up
               </span>
