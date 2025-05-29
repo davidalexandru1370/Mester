@@ -11,6 +11,7 @@ public class User
     public required string Salt { get; set; }
 
     public required string PhoneNumber { get; set; }
+    public string? ImageUrl { get; set; }
 
     public TradesMan? TradesManProfile { get; set; }
 }

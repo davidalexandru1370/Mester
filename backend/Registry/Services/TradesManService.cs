@@ -4,6 +4,7 @@ using Registry.DTO;
 using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
+using System.Runtime.CompilerServices;
 
 namespace Registry.Services
 {
@@ -22,23 +23,23 @@ namespace Registry.Services
         }
 
 
-        public async Task<List<string>> GetSpecialities()
+        public async Task<List<string>> GetSpecialities(CancellationToken token = default)
         {
-            return await _context.Specialties.Select(s => s.Type).ToListAsync();
+            return await _context.Specialties.Select(s => s.Type).ToListAsync(token);
         }
 
-        public async Task<Specialty?> FindSpeciality(string Type)
+        public async Task<Specialty?> FindSpeciality(string Type, CancellationToken token = default)
         {
-            return await _context.Specialties.FirstOrDefaultAsync(x => x.Type == Type);
+            return await _context.Specialties.FirstOrDefaultAsync(x => x.Type == Type, token);
         }
 
-        public async Task<List<Specialty>> GetSpecialitiesByName(IList<string> specialitiesTypeNames)
+        public async Task<List<Specialty>> GetSpecialitiesByName(IList<string> specialitiesTypeNames, CancellationToken token = default)
         {
             var specialities = new List<Specialty>();
             var invalidSpecialities = new List<string>();
             foreach (var specialityName in specialitiesTypeNames)
             {
-                var speciality = await FindSpeciality(specialityName);
+                var speciality = await FindSpeciality(specialityName, token);
                 if (speciality is null)
                 {
                     invalidSpecialities.Add(specialityName);
@@ -55,16 +56,16 @@ namespace Registry.Services
             return specialities;
         }
 
-        public async Task UpdateTradesManProfile(User user, TradesManDTO tradesManDTO)
+        public async Task UpdateTradesManProfile(User user, TradesManDTO tradesManDTO, CancellationToken token = default)
         {
-            var specialities = await GetSpecialitiesByName(tradesManDTO.Specialties);
+            var specialities = await GetSpecialitiesByName(tradesManDTO.Specialties, token);
 
             user.TradesManProfile = new TradesMan { Specialties = specialities, Description = tradesManDTO.Description };
             _context.Update(user);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(token);
         }
 
-        public async Task<List<TradesManListDTO>> GetTradesManList(FilterListTradesMen filter)
+        public async Task<List<TradesManListDTO>> GetTradesManList(FilterListTradesMen filter, CancellationToken token = default)
         {
             //TODO: add sorting based on rating
             var query = _context.Users.Include(x => x.TradesManProfile)
@@ -83,7 +84,7 @@ namespace Registry.Services
                     Name = x.Name,
                     Specialities = x.TradesManProfile!.Specialties.Select(x => x.Type).ToList()
                 })
-                .ToListAsync();
+                .ToListAsync(token);
         }
 
         public async Task<TradesManInfoPageDTO?> GetTradesManInfo(Guid id)
@@ -102,6 +103,63 @@ namespace Registry.Services
                 Description = r.TradesManProfile!.Description,
                 Specialities = r.TradesManProfile.Specialties.Select(x => x.Type).ToList()
             };
+        }
+
+        // TODO: return something
+        public async Task CreateRequest(User user, User tradesMan, string description)
+        {
+            var request = new ClientRequest
+            {
+                From = user,
+                To = tradesMan,
+                Description = description
+            };
+            await _context.ClientRequests.AddAsync(request);
+            await _context.SaveChangesAsync();
+        }
+
+        public async IAsyncEnumerable<ConversationDTO> GetConversations(User user, [EnumeratorCancellation] CancellationToken token = default)
+        {
+            var r = _context.Conversations
+                .Include(c => c.User1)
+                .Include(c => c.User2)
+                .Include(c => c.Messages)
+                .Where(c => c.User1.Id == user.Id || c.User2.Id == user.Id)
+                .AsAsyncEnumerable()
+                .WithCancellation(token);
+
+            await foreach (var c in r)
+            {
+                var dto = c.ToConversationDTO(user.Id);
+                if (dto is null) continue;
+                yield return dto;
+            }
+        }
+
+        public async Task<List<MessageDTO>?> GetMessages(User user, Guid conversationId, CancellationToken token = default)
+        {
+            var conversation = await _context.Conversations
+                .Include(c => c.Messages)
+                // the second if is only used to make sure the user doesn't get messages from another user
+                .Where(c => c.Id == conversationId && (c.User1.Id == user.Id || c.User2.Id == user.Id))
+                .FirstOrDefaultAsync(token);
+            if (conversation is null) return null;
+
+            return conversation.Messages.Select(m => m.ToMessageDTO(user.Id)).ToList();
+        }
+
+        public async Task SendMessage(User user, SendMessageDTO sendMessage, CancellationToken token = default)
+        {
+            var conversation = await _context.Conversations.FindAsync(sendMessage.ConversationId, token) ?? throw new ServiceException("Conversation was not found");
+            var message = new Message
+            {
+                From = user,
+                Sent = DateTime.Now,
+                Text = sendMessage.Text,
+                Conversation = conversation,
+            };
+            await _context.Messages.AddAsync(message, token);
+            await _context.SaveChangesAsync(token);
         }
     }
 }

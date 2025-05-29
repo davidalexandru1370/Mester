@@ -1,4 +1,6 @@
-﻿using Riok.Mapperly.Abstractions;
+﻿using Registry.DTO;
+using Registry.Models;
+using Riok.Mapperly.Abstractions;
 
 namespace Registry
 {
@@ -6,6 +8,50 @@ namespace Registry
     [Mapper]
     public static partial class MapperExtensions
     {
+        public static ConversationDTO? ToConversationDTO(this Conversation conversation, Guid currentUserId)
+        {
+            User otherUser;
+            if (conversation.User1.Id == currentUserId)
+            {
+                otherUser = conversation.User2;
+            }
+            else
+            {
+                otherUser = conversation.User1;
+            }
+            var lastMessage = conversation.Messages.MaxBy(m => m.Sent);
+            if (lastMessage is null)
+            {
+                return null;
+            }
 
+            return new ConversationDTO
+            {
+                Id = conversation.Id,
+                With = otherUser.ToConversationUserDTO(),
+                LastMessage = lastMessage.ToMessageDTO(currentUserId),
+            };
+        }
+
+        public static ConversationUserDTO ToConversationUserDTO(this User user)
+        {
+            return new ConversationUserDTO
+            {
+                Id = user.Id,
+                Name = user.Name,
+                ImageUrl = user.ImageUrl
+            };
+        }
+
+        public static MessageDTO ToMessageDTO(this Message message, Guid currentUserId)
+        {
+            return new MessageDTO
+            {
+                Id = message.Id,
+                From = message.From.ToConversationUserDTO(),
+                Text = message.Text,
+                IsMe = message.From.Id == currentUserId,
+            };
+        }
     }
 }

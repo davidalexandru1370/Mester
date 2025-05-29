@@ -18,6 +18,9 @@ namespace Registry.Repository
         public virtual DbSet<Review> Reviews { get; set; }
         public virtual DbSet<Specialty> Specialties { get; set; }
 
+        public virtual DbSet<ClientRequest> ClientRequests { get; set; }
+        public virtual DbSet<Message> Messages { get; set; }
+        public virtual DbSet<Conversation> Conversations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +34,11 @@ namespace Registry.Repository
 
             modelBuilder.Entity<Specialty>().HasIndex(e => e.Type).IsUnique();
 
+            modelBuilder.Entity<ClientRequest>().Property(x => x.WorkmanshipAmount).HasPrecision(18, 2);
+            modelBuilder.Entity<ClientRequest>().HasOne(x => x.To).WithMany().OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Conversation>().HasOne(x => x.User1).WithMany().OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Conversation>().HasOne(x => x.User2).WithMany().OnDelete(DeleteBehavior.Restrict);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
