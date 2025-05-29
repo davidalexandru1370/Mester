@@ -13,16 +13,17 @@ namespace Registry.Repository
             _context = context;
         }
 
-        public async Task Add(User user)
+        public async Task<User> Add(User user)
         {
             try
             {
-                await _context.Users.AddAsync(user);
+                var createdUser = await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
+                
+                return createdUser.Entity;
             }
             catch (DbUpdateException e)
             {
-
                 throw RepositoryException.From(e);
             }
         }
@@ -40,12 +41,27 @@ namespace Registry.Repository
             }
         }
 
-        public async Task<User?> FindByUsername(string username)
+        public async Task<User?> FindByUsername(string email)
         {
             var user = await _context.Users
-                .Where(x => x.Name == username)
+                .Where(x => x.Name == email)
                 .Include(x => x.TradesManProfile)
                 .FirstOrDefaultAsync();
+            return user;
+        }
+
+        public async Task<User> GetUserById(Guid userId)
+        {
+            var user = await _context.Users
+                .Where(u => u.Id == userId)
+                .Include (u => u.TradesManProfile)
+                .FirstOrDefaultAsync();
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
+
             return user;
         }
     }

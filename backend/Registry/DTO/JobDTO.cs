@@ -11,6 +11,6 @@ namespace Registry.DTO
         public required DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
 
-        public required List<Specialty> JobTypes { get; set; }
+        public required List<Speciality> JobTypes { get; set; }
     }
 }

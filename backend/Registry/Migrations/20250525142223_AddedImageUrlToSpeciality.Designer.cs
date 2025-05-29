@@ -12,79 +12,18 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    [Migration("20250529074556_Payments")]
-    partial class Payments
+    [Migration("20250525142223_AddedImageUrlToSpeciality")]
+    partial class AddedImageUrlToSpeciality
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.5")
+                .HasAnnotation("ProductVersion", "9.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Registry.Models.ClientRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ApprovedId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("AproximateEndDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("FromId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("RequestedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("ToId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal?>("WorkmanshipAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ApprovedId");
-
-                    b.HasIndex("FromId");
-
-                    b.HasIndex("ToId");
-
-                    b.ToTable("ClientRequests");
-                });
-
-            modelBuilder.Entity("Registry.Models.Conversation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("User1Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("User2Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("User1Id");
-
-                    b.HasIndex("User2Id");
-
-                    b.ToTable("Conversations");
-                });
 
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
@@ -113,37 +52,6 @@ namespace Registry.Migrations
                     b.ToTable("Jobs");
                 });
 
-            modelBuilder.Entity("Registry.Models.Message", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ConversationId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("FromId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("Seen")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Sent")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConversationId");
-
-                    b.HasIndex("FromId");
-
-                    b.ToTable("Messages");
-                });
-
             modelBuilder.Entity("Registry.Models.Review", b =>
                 {
                     b.Property<Guid>("Id")
@@ -167,11 +75,15 @@ namespace Registry.Migrations
                     b.ToTable("Reviews");
                 });
 
-            modelBuilder.Entity("Registry.Models.Specialty", b =>
+            modelBuilder.Entity("Registry.Models.Speciality", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("JobId")
                         .HasColumnType("uniqueidentifier");
@@ -219,9 +131,6 @@ namespace Registry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -237,50 +146,6 @@ namespace Registry.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Registry.Models.ClientRequest", b =>
-                {
-                    b.HasOne("Registry.Models.Job", "Approved")
-                        .WithMany()
-                        .HasForeignKey("ApprovedId");
-
-                    b.HasOne("Registry.Models.User", "From")
-                        .WithMany()
-                        .HasForeignKey("FromId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Registry.Models.User", "To")
-                        .WithMany()
-                        .HasForeignKey("ToId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Approved");
-
-                    b.Navigation("From");
-
-                    b.Navigation("To");
-                });
-
-            modelBuilder.Entity("Registry.Models.Conversation", b =>
-                {
-                    b.HasOne("Registry.Models.User", "User1")
-                        .WithMany()
-                        .HasForeignKey("User1Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Registry.Models.User", "User2")
-                        .WithMany()
-                        .HasForeignKey("User2Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User1");
-
-                    b.Navigation("User2");
                 });
 
             modelBuilder.Entity("Registry.Models.Job", b =>
@@ -302,25 +167,6 @@ namespace Registry.Migrations
                     b.Navigation("TradesMan");
                 });
 
-            modelBuilder.Entity("Registry.Models.Message", b =>
-                {
-                    b.HasOne("Registry.Models.Conversation", "Conversation")
-                        .WithMany("Messages")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Registry.Models.User", "From")
-                        .WithMany()
-                        .HasForeignKey("FromId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Conversation");
-
-                    b.Navigation("From");
-                });
-
             modelBuilder.Entity("Registry.Models.Review", b =>
                 {
                     b.HasOne("Registry.Models.Job", "Job")
@@ -332,7 +178,7 @@ namespace Registry.Migrations
                     b.Navigation("Job");
                 });
 
-            modelBuilder.Entity("Registry.Models.Specialty", b =>
+            modelBuilder.Entity("Registry.Models.Speciality", b =>
                 {
                     b.HasOne("Registry.Models.Job", null)
                         .WithMany("JobTypes")
@@ -350,11 +196,6 @@ namespace Registry.Migrations
                         .HasForeignKey("Registry.Models.TradesMan", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Registry.Models.Conversation", b =>
-                {
-                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Registry.Models.Job", b =>
