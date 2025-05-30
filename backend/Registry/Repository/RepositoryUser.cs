@@ -64,5 +64,18 @@ namespace Registry.Repository
 
             return user;
         }
+
+        public async Task UpdateUserImage(Guid userId, string imageUrl)
+        {
+            var user = await _context.Users.Where(x => x.Id == userId).FirstOrDefaultAsync();
+
+            if (user is null) {
+                throw new NotFoundException();
+            }
+
+            _context.Users.Update(user);
+
+            await _context.SaveChangesAsync();
+        }
     }
 }
