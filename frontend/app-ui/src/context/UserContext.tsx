@@ -3,6 +3,8 @@ import { createContext, useContext, useState, ReactNode } from "react";
 export interface UserDetailsDto {
   id: string;
   name: string;
+  email: string;
+  imageUrl: string;
   isTradesman: boolean;
 }
 

@@ -153,6 +153,8 @@ public class UserService : IUserService
         {
             Name = user.Name,
             Id = user.Id,
+            Email = user.Email,
+            ImageUrl = user.ImageUrl,
             IsTradesman = !(user.TradesManProfile is null)
         };
     }
@@ -161,7 +163,7 @@ public class UserService : IUserService
     {
         var imageUploadUrl = await _imageService.UploadImage(image);
 
-        if (String.IsNullOrEmpty(imageUploadUrl))
+        if (!String.IsNullOrEmpty(imageUploadUrl))
         {
             await _repoUsers.UpdateUserImage(userId, imageUploadUrl);
         }
