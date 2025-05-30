@@ -59,7 +59,13 @@ export default function () {
             },
           }
         );
-        toast("Profile image updated successfully!");
+        toast("Profile image updated successfully!", {
+          type: "success",
+        });
+        setUserDetails({
+          ...userDetails,
+          imageUrl: response.data.imageUrl,
+        } as UserDetailsDto);
       } catch (error) {
         let errorMessage = "Failed to upload image";
         if (error instanceof Error) {
@@ -113,8 +119,10 @@ export default function () {
                 >
                   <img
                     src={
-                      userDetails?.imageUrl ||
-                      "https://via.placeholder.com/120x120.png?text=Profile"
+                      userDetails?.imageUrl &&
+                      /^https?:\/\/[^\s]+$/.test(userDetails.imageUrl)
+                        ? userDetails.imageUrl
+                        : "https://via.placeholder.com/120x120.png?text=Profile"
                     }
                     alt="Profile"
                     style={{
