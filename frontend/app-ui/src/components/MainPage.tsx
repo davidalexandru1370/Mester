@@ -1,6 +1,5 @@
 import { useContext, useEffect, useReducer, useState } from "react";
 import NavMenu from "./NavMenu.tsx";
-import OfferWindow from "./OfferWindow.tsx";
 import axios from "axios";
 import { Container } from "reactstrap";
 import { Input } from "@/components/ui/input";

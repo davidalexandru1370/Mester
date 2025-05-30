@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Registry.Models;
 
 namespace Registry.Identity
 {
@@ -13,7 +14,7 @@ namespace Registry.Identity
 
             try
             {
-                var userId = Guid.Parse(claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "Id").Value);
+                var userId = Guid.Parse(claimsPrincipal.Claims.FirstOrDefault(c => c.Type == nameof(TokenRegistrationRequest.Id)).Value);
                 return userId;
             }
             catch (FormatException)

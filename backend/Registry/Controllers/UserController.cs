@@ -51,6 +51,7 @@ public class UserController : ControllerBase
         var token = _authenticationService.CreateToken(new TokenRegistrationRequest
         {
             Email = loginUserData.Email,
+            Id = user.Id,
             CustomClaims = []
         });
         return TypedResults.Ok(token);
@@ -113,5 +114,14 @@ public class UserController : ControllerBase
     public IActionResult Authorize()
     {
         return Ok();
+    }
+
+    [Authorize]
+    [HttpPut("update-avatar")]
+    public async Task<ActionResult<UserImageDTO>> UploadUserImage([FromForm] UpdateUserImageRequest request)
+    {
+        var userId = User.GetUserId();
+        var uploadImage = await _authenticationService.UploadUserImage(request.Image, userId);
+        return Ok(uploadImage);
     }
 }
