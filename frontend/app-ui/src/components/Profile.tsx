@@ -12,11 +12,18 @@ export default function () {
 
         event.preventDefault();
         try {
-            await axios.post("https://localhost:8081/identity/createTradesManProfile", {
+            await axios.post("https://localhost:8081/api/User/createTradesManProfile", {
     
-                specialties: [],
+                specialities: [
+                  {
+                  price: 1000,
+                  name: 'Zugravit',
+                  unitOfMeasure: 'metru patrat',
+                  }
+                ],
                 description: "I trade.",
-    
+                city: "Oradea",
+                county: "Bihor",
             }, {
                 timeout: 5000,
                 headers: {

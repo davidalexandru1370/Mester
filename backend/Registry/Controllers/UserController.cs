@@ -30,7 +30,7 @@ public class UserController : ControllerBase
     {
         try
         {
-            await _authenticationService.CreateUser(request.Email, request.Password, request.PhoneNumber, request.Email);
+            await _authenticationService.CreateUser(request.Username, request.Password, request.PhoneNumber, request.Email);
             return TypedResults.Ok();
         }
         catch (NameAlreadyUsedException)

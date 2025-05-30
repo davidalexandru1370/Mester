@@ -36,7 +36,7 @@ public class UserService : IUserService
         {
             return null;
         }
-        var user = await _repoUsers.FindByUsername(email);
+        var user = await _repoUsers.FindByEmail(email);
         return user;
     }
 
@@ -129,7 +129,7 @@ public class UserService : IUserService
     /// <returns></returns>
     public async Task<User?> LoginUser(string email, string password)
     {
-        var user = await _repoUsers.FindByUsername(email);
+        var user = await _repoUsers.FindByEmail(email);
         if (user is null)
         {
             return null;

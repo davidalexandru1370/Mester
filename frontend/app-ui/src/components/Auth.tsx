@@ -12,6 +12,7 @@ export default function () {
     setAuthMode(authMode === "signin" ? "signup" : "signin");
   };
 
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -63,6 +64,7 @@ export default function () {
         .post(
           "https://localhost:8081/api/user/createAccount",
           {
+            username: username,
             email: email,
             password: password,
             phoneNumber: phoneNumber,
@@ -96,7 +98,7 @@ export default function () {
           <div className="Auth-form-content">
             <h3 className="Auth-form-title">Sign In</h3>
             <div className="text-center">
-              Not registered yet?
+              Not registered yet?{" "}
               <span className="link-primary" onClick={changeAuthMode}>
                 Sign Up
               </span>
@@ -152,6 +154,16 @@ export default function () {
               placeholder="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="form-group mt-3">
+            <label>Username</label>
+            <input
+              type="username"
+              className="form-control mt-1"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           <div className="form-group mt-3">
