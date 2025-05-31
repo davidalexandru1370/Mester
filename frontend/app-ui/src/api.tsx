@@ -109,6 +109,7 @@ export async function registerUser(email: string, password: string, phoneNumber:
                         "Content-Type": "application/json",
                         accept: "application/json", // If you receieve JSON response.
                     },
+                    signal
                 }
             );
         console.log(response.data.success);
@@ -148,6 +149,7 @@ export async function getConversations(token: string, signal?: AbortSignal): Pro
                     headers: {
                         Authorization: `Bearer ${token}`
                     },
+                    signal
                 }
             );
         return response.data as Conversation[];
