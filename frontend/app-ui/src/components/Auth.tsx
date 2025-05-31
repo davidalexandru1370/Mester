@@ -17,10 +17,9 @@ export default function () {
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  let currentId = 0;
   let navigate = useNavigate();
 
-  const { token, setToken } = useToken();
+  const { setToken } = useToken();
 
   useEffect(() => {}, []);
 
@@ -60,27 +59,22 @@ export default function () {
   async function register(event: { preventDefault: () => void }) {
     event.preventDefault();
     try {
-      await axios
-        .post(
+      await axios.post(
           "https://localhost:8081/api/user/createAccount",
           {
             username: username,
             email: email,
             password: password,
             phoneNumber: phoneNumber,
+        },
+        {
+          timeout: 5000,
+          headers: {
+            "Content-Type": "application/json",
+            accept: "application/json", // If you receieve JSON response.
           },
-          {
-            timeout: 5000,
-            headers: {
-              "Content-Type": "application/json",
-              accept: "application/json", // If you receieve JSON response.
-            },
-          }
-        )
-        .then(function (response) {
-          currentId = response.data.success;
-          console.log(response.data.success);
-        });
+        }
+      );
       changeAuthMode();
     } catch (err) {
       let errorMessage = "Failed to do something exceptional";

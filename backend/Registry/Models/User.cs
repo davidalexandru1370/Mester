@@ -18,4 +18,6 @@ public class User
     public required string PhoneNumber { get; set; }
 
     public TradesMan? TradesManProfile { get; set; }
+
+    public string ImageUrl { get; set; }
 }

@@ -3,6 +3,8 @@ import { createContext, useContext, useState, ReactNode } from "react";
 export interface UserDetailsDto {
   id: string;
   name: string;
+  email: string;
+  imageUrl: string;
   isTradesman: boolean;
 }
 
@@ -15,7 +17,6 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserDetailsDto | null>(null);
-
   return (
     <UserContext.Provider value={{ user, setUser }}>
       {children}

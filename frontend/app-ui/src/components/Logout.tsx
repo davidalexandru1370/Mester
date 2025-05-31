@@ -1,41 +1,42 @@
-import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import NavMenu from "./NavMenu"
-import useToken from './useToken';
+import "react-toastify/dist/ReactToastify.css";
+import NavMenu from "./NavMenu";
+import useToken from "./useToken";
 
 export default function () {
+  const { setToken } = useToken();
 
-    const { token, setToken } = useToken();
+  let navigate = useNavigate();
 
-    let navigate = useNavigate();
+  async function logout(event: { preventDefault: () => void }) {
+    event.preventDefault();
 
-    async function logout(event: { preventDefault: () => void; }) {
+    setToken("");
 
-        event.preventDefault();
-
-        setToken("");
-
-        navigate("/auth");
-      }
+    navigate("/auth");
+  }
 
   return (
-    <div >
-    <NavMenu/>
-    <div className="Auth-form-container">
-      <form className="Auth-form">
-        <div className="Auth-form-content">
-          <h3 className="Auth-form-title">Are you sure you want to log out?</h3>
-          <div className="d-grid gap-2 mt-3">
-            <button type="submit" className="btn btn-primary" onClick={logout}>
-              Log Out
-            </button>
+    <div>
+      <NavMenu />
+      <div className="Auth-form-container">
+        <form className="Auth-form">
+          <div className="Auth-form-content">
+            <h3 className="Auth-form-title">
+              Are you sure you want to log out?
+            </h3>
+            <div className="d-grid gap-2 mt-3">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                onClick={logout}
+              >
+                Log Out
+              </button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
-    </div>
-  )
+  );
 }
