@@ -2,8 +2,8 @@
 {
     public class AssignSpecialityDTO
     {
-        public uint Price { get; set; }
-        public string Name { get; set; }
-        public string UnitOfMeasure { get; set; }
+        public required uint Price { get; set; }
+        public required string Name { get; set; }
+        public required string UnitOfMeasure { get; set; }
     }
 }

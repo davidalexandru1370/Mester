@@ -12,7 +12,7 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    [Migration("20250529210240_Payments")]
+    [Migration("20250529212412_Payments")]
     partial class Payments
     {
         /// <inheritdoc />

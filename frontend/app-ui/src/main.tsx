@@ -4,12 +4,20 @@ import "./index.css";
 import App from "./App.tsx";
 import { DataStoreContextProvider } from "./context/DataStoreContext.tsx";
 import { UserContextProvider } from "./context/UserContext.tsx";
+import { AuthProvider } from "react-auth-kit";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <UserContextProvider>
       <DataStoreContextProvider>
-        <App />
+        <AuthProvider
+          authType={"cookie"}
+          authName={"_auth"}
+          cookieSecure={true}
+          cookieDomain="localhost"
+        >
+          <App />
+        </AuthProvider>
       </DataStoreContextProvider>
     </UserContextProvider>
   </StrictMode>

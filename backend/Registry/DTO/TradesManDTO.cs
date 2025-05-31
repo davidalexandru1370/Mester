@@ -4,7 +4,7 @@
     {
         public required List<AssignSpecialityDTO> Specialities { get; set; }
         public required string Description { get; set; }
-        public string City { get; set; }
-        public string County { get; set; }
+        public required string City { get; set; }
+        public required string County { get; set; }
     }
 }

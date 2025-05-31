@@ -2,10 +2,10 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Registry.DTO;
+using Registry.DTO.Requests;
 using Registry.Errors.Services;
 using Registry.Identity;
 using Registry.Models;
-using Registry.Models.Request;
 using Registry.Services.Interfaces;
 
 namespace Registry.Controllers;
@@ -24,7 +24,7 @@ public class UserController : ControllerBase
         _tradesManService = tradesManService;
         _dataSeedingService = dataSeedingService;
     }
-    
+
     [HttpPost("createAccount")]
     public async Task<Results<Ok, Conflict>> CreateAccount([FromBody] CreateAccountRequest request)
     {
@@ -38,7 +38,7 @@ public class UserController : ControllerBase
             return TypedResults.Conflict();
         }
     }
-    
+
     [HttpPost("login")]
     public async Task<Results<Ok<TokenResponse>, UnauthorizedHttpResult>> Login([FromBody] LoginUserRequest loginUserData)
     {
@@ -70,16 +70,12 @@ public class UserController : ControllerBase
 
         return Created();
     }
-    
+
     [Authorize]
     [HttpPost("createTradesManProfile")]
     public async Task<Results<Ok, UnauthorizedHttpResult, Conflict, BadRequest<string>>> CreateTradesManProfile([FromBody] TradesManDTO tradesManDto)
     {
         var user = await _authenticationService.GetByClaims(this.User);
-        if (user is null)
-        {
-            return TypedResults.Unauthorized();
-        }
 
         if (user.TradesManProfile is not null)
         {
@@ -107,11 +103,19 @@ public class UserController : ControllerBase
 
         return Ok(foundUser);
     }
-    
+
     [Authorize]
     [HttpGet("authorize")]
     public IActionResult Authorize()
     {
         return Ok();
+    }
+
+    [Authorize]
+    [HttpGet("tradesmen")]
+    public async Task<IActionResult> FindTradesMen([FromQuery] string pattern = "", [FromQuery] int limit = 10)
+    {
+        var r = await _tradesManService.FindTradesMen(pattern, limit);
+        return Ok(r);
     }
 }

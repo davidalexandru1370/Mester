@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.IdentityModel.Tokens;
+using Registry.DTO;
 using Registry.Errors.Repositories;
 using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
+using Registry.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Registry.Services.Interfaces;
-using Registry.DTO;
 
 namespace Registry.Services;
 
@@ -29,14 +29,10 @@ public class UserService : IUserService
         _repoUsers = repoUsers;
     }
 
-    public async Task<User?> GetByClaims(ClaimsPrincipal claims)
+    public async Task<User> GetByClaims(ClaimsPrincipal claims)
     {
-        var email = claims.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value;
-        if (email is null)
-        {
-            return null;
-        }
-        var user = await _repoUsers.FindByUsername(email);
+        var email = claims.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value ?? throw new UnauthorizedException();
+        var user = await _repoUsers.FindByUsername(email) ?? throw new UnauthorizedException();
         return user;
     }
 

@@ -16,12 +16,11 @@ export default function () {
   const [password, setPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  let currentId = 0;
   let navigate = useNavigate();
 
-  const { token, setToken } = useToken();
+  const { setToken } = useToken();
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
 
   async function login(event: { preventDefault: () => void }) {
     event.preventDefault();
@@ -76,7 +75,6 @@ export default function () {
           }
         )
         .then(function (response) {
-          currentId = response.data.success;
           console.log(response.data.success);
         });
       changeAuthMode();

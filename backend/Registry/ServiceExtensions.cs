@@ -1,5 +1,4 @@
-﻿using System.Net;
-using FluentValidation;
+﻿using FluentValidation;
 using Registry.Errors.Repositories;
 using Registry.Errors.Services;
 using Registry.Models;
@@ -7,6 +6,7 @@ using Registry.Repository;
 using Registry.Services;
 using Registry.Services.Interfaces;
 using Registry.Validator;
+using System.Net;
 
 namespace Registry
 {
@@ -63,6 +63,15 @@ namespace Registry
                     {
                         message = ex.Message
                     });
+                }
+                catch (UnauthorizedException ex)
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        message = ex.Message
+                    });
+
                 }
                 catch (Exception ex) when (ex is ServiceException || ex is ApplicationException)
                 {

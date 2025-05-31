@@ -2,11 +2,11 @@
 {
     public class SpecialityDTO
     {
-        public Guid SpecialityId { get; set; }
-        public Guid TradesManId { get; set; }
-        public string Type { get; set; }
-        public string ImageUrl { get; set; }
-        public uint Price { get; set; }
-        public string UnitOfMeasure { get; set; }
+        public required Guid SpecialityId { get; set; }
+        public required Guid TradesManId { get; set; }
+        public required string Type { get; set; }
+        public required string ImageUrl { get; set; }
+        public required uint Price { get; set; }
+        public required string UnitOfMeasure { get; set; }
     }
 }

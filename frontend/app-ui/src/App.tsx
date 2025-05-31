@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Profile from "./components/Profile.tsx";
 import Logout from "./components/Logout.tsx";
 import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
+import Conversations from "./components/message/Conversations.tsx";
 
 function App() {
   return (
@@ -30,6 +31,11 @@ function App() {
         />
         <Route path="/user" element={<Profile />} />
         <Route path="/logout" element={<Logout />} />
+        <Route path="/conversations" element={
+          <ProtectedRoute>
+            <Conversations />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   );

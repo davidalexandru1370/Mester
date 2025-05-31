@@ -1,14 +1,12 @@
-﻿using Registry.Models;
-
-namespace Registry.DTO
+﻿namespace Registry.DTO
 {
     public class TradesManInfoPageDTO
     {
         public required Guid Id { get; set; }
         public required string Name { get; set; }
         public required string Description { get; set; }
-        public string City { get; set; }
-        public string County { get; set; }
+        public required string City { get; set; }
+        public required string County { get; set; }
         public required List<SpecialityDTO> Specialities { get; set; }
 
         // TODO: add profile picture, add photo carousel, reviews
