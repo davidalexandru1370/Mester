@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Cors;
 using Microsoft.IdentityModel.Tokens;
 using Registry.DTO;
+using Registry.Errors;
 using Registry.Errors.Repositories;
 using Registry.Errors.Services;
 using Registry.Models;
@@ -159,7 +160,7 @@ public class UserService : IUserService
     {
         var imageUploadUrl = await _imageService.UploadImage(image);
 
-        if (!String.IsNullOrEmpty(imageUploadUrl))
+        if (!string.IsNullOrEmpty(imageUploadUrl))
         {
             await _repoUsers.UpdateUserImage(userId, imageUploadUrl);
         }

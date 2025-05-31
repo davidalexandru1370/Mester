@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Registry.Errors;
 using Registry.Errors.Repositories;
 using Registry.Models;
 
@@ -52,17 +53,10 @@ namespace Registry.Repository
 
         public async Task<User> GetUserById(Guid userId)
         {
-            var user = await _context.Users
+            return await _context.Users
                 .Where(u => u.Id == userId)
                 .Include(u => u.TradesManProfile)
-                .FirstOrDefaultAsync();
-
-            if (user is null)
-            {
-                throw new NotFoundException();
-            }
-
-            return user;
+                .FirstOrDefaultAsync() ?? throw new NotFoundException();
         }
 
         public async Task UpdateUserImage(Guid userId, string imageUrl)

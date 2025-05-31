@@ -2,13 +2,10 @@
 
 public class Job
 {
-    public required Guid Id { get; set; }
-    public required User Client { get; set; }
-    public required User TradesMan { get; set; }
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public required ClientJobRequest JobRequest { get; set; }
+    public required TradesManJobResponse TradesManJobResponse { get; set; }
 
     public required DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
-
-    public required List<Speciality> JobTypes { get; set; }
-
 }

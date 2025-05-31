@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Registry.Errors;
 using Registry.Errors.Repositories;
 using Registry.Errors.Services;
 using Registry.Models;
@@ -31,7 +32,8 @@ namespace Registry
                 })
                 .AddScoped<ITradesManService, TradesManService>()
                 .AddScoped<IImageService, ImageService>()
-                .AddScoped<IDataSeedingService, DataSeedingService>();
+                .AddScoped<IDataSeedingService, DataSeedingService>()
+                .AddScoped<IJobsService, JobsService>();
         }
 
         public static IServiceCollection AddValidators(this IServiceCollection services)
@@ -47,10 +49,18 @@ namespace Registry
                 {
                     await next(context);
                 }
-                catch (NameAlreadyUsedException ex)
+                catch (ConflictException ex)
                 {
-                    // CONFLICT STATUS CODE
-                    context.Response.StatusCode = 409;
+                    context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        message = ex.Message
+                    });
+                }
+                catch (RepoConflictException ex)
+                {
+                    // TODO: not the best. Find a way to make the RepoConflictException a ConflictException
+                    context.Response.StatusCode = (int)HttpStatusCode.Conflict;
                     await context.Response.WriteAsJsonAsync(new
                     {
                         message = ex.Message
@@ -73,7 +83,7 @@ namespace Registry
                     });
 
                 }
-                catch (Exception ex) when (ex is ServiceException || ex is ApplicationException)
+                catch (Exception ex) when (ex is ServiceException || ex is Errors.ApplicationException)
                 {
                     context.Response.StatusCode = 500;
                     await context.Response.WriteAsJsonAsync(new

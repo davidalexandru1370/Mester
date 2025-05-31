@@ -19,15 +19,21 @@ namespace Registry.Repository
         public virtual DbSet<Speciality> Specialties { get; set; }
         public virtual DbSet<TradesManSpecialities> TradesManSpecialities { get; set; }
 
-        public virtual DbSet<ClientRequest> ClientRequests { get; set; }
+        public virtual DbSet<ClientJobRequest> ClientRequests { get; set; }
         public virtual DbSet<Message> Messages { get; set; }
         public virtual DbSet<Conversation> Conversations { get; set; }
+        public virtual DbSet<TradesManJobResponse> TradesManJobResponses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Job>()
-                   .HasOne(x => x.Client)
-                   .WithMany().OnDelete(DeleteBehavior.Restrict);
+                .HasOne(x => x.JobRequest)
+                .WithMany().OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Job>()
+                .HasOne(x => x.TradesManJobResponse)
+                .WithMany().OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<User>()
                 .HasOne(x => x.TradesManProfile)
                 .WithOne().OnDelete(DeleteBehavior.Restrict)
@@ -35,11 +41,10 @@ namespace Registry.Repository
 
             modelBuilder.Entity<Speciality>().HasIndex(e => e.Type).IsUnique();
 
-            modelBuilder.Entity<ClientRequest>().Property(x => x.WorkmanshipAmount).HasPrecision(18, 2);
-            modelBuilder.Entity<ClientRequest>().HasOne(x => x.To).WithMany().OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<TradesManJobResponse>().Property(x => x.WorkmanshipAmount).HasPrecision(18, 2);
 
-            modelBuilder.Entity<Conversation>().HasOne(x => x.User1).WithMany().OnDelete(DeleteBehavior.Restrict);
-            modelBuilder.Entity<Conversation>().HasOne(x => x.User2).WithMany().OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Conversation>().HasOne(x => x.Request).WithMany().OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Conversation>().HasOne(x => x.TradesMan).WithMany().OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<TradesManSpecialities>()
                 .HasKey(e => new { e.TradesManId, e.SpecialityId });
 
@@ -47,11 +52,13 @@ namespace Registry.Repository
                 .HasOne(e => e.TradesMan)
                 .WithMany(s => s.Specialities)
                 .HasForeignKey(e => e.TradesManId);
-
             modelBuilder.Entity<TradesManSpecialities>()
                 .HasOne(e => e.Speciality)
                 .WithMany(c => c.TradesMenSpecialities)
                 .HasForeignKey(e => e.SpecialityId);
+
+            modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.JobApproved).WithOne();
+            modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.InitiatedBy).WithMany().OnDelete(DeleteBehavior.Restrict);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

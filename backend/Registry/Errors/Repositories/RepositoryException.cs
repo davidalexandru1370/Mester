@@ -5,7 +5,7 @@ namespace Registry.Errors.Repositories
 {
 
     [Serializable]
-    public class RepositoryException : Exception
+    public class RepositoryException : ApplicationException
     {
         public RepositoryException() { }
         public RepositoryException(string message) : base(message) { }
@@ -20,7 +20,7 @@ namespace Registry.Errors.Repositories
             }
             if (sqlEx.Number == 2627 || sqlEx.Number == 2601)
             {
-                return new ConflictException("Key already used", sqlEx);
+                return new RepoConflictException("Key already used", sqlEx);
             }
             return new RepositoryException(exception.Message, exception);
         }

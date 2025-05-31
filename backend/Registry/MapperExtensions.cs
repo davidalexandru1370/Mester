@@ -9,24 +9,22 @@ namespace Registry
     [Mapper]
     public static partial class MapperExtensions
     {
-        public static ConversationDTO ToConversationDTO(this Conversation conversation, Guid currentUserId)
+        public static ConversationDTO ToConversationDTO(this Conversation conversation, Guid currentUser)
         {
-            User otherUser;
-            if (conversation.User1.Id == currentUserId)
-            {
-                otherUser = conversation.User2;
-            }
-            else
-            {
-                otherUser = conversation.User1;
-            }
-            var lastMessage = conversation.Messages.MaxBy(m => m.Sent);
+            var lastMessage = conversation.Messages.MaxBy(m => m.Sent)?.ToMessageAndResponseDTO(currentUser);
+            var lastResponse = conversation.Responses.MaxBy(m => m.Sent)?.ToMessageAndResponseDTO(currentUser);
 
+            var last = lastMessage;
+            if (lastMessage is not null && lastResponse is not null && lastResponse.Sent > lastMessage.Sent)
+            {
+                last = lastResponse;
+            }
             return new ConversationDTO
             {
                 Id = conversation.Id,
-                With = otherUser.ToConversationUserDTO(),
-                LastMessage = lastMessage?.ToMessageDTO(currentUserId),
+                ClientRequest = conversation.Request.ToClientJobRequestDTO(),
+                TradesMan = conversation.TradesMan.ToConversationUserDTO(),
+                LastMessage = last
             };
         }
 
@@ -40,16 +38,50 @@ namespace Registry
             };
         }
 
-        public static MessageDTO ToMessageDTO(this Message message, Guid currentUserId)
+        public static MessageAndResponsesDTO ToMessageAndResponseDTO(this Message message, Guid currentUser)
         {
-            return new MessageDTO
+            return new MessageAndResponsesDTO
             {
-                Id = message.Id,
-                From = message.From.ToConversationUserDTO(),
-                Text = message.Text,
-                IsMe = message.From.Id == currentUserId,
+                IsMe = message.FromId == currentUser,
+                Message = message.ToMessageDTO(),
+                Seen = message.Seen,
+                Sent = message.Sent,
             };
         }
+
+        public static MessageAndResponsesDTO ToMessageAndResponseDTO(this TradesManJobResponse response, Guid currentUser)
+        {
+            return new MessageAndResponsesDTO
+            {
+                IsMe = response.TradesManId == currentUser,
+                ClientRequestResponse = response.ToTradesManJobResponseDTO(),
+                Seen = response.Seen,
+                Sent = response.Sent,
+            };
+        }
+
+        public static ClientJobRequestDTO ToClientJobRequestDTO(this ClientJobRequest request)
+        {
+            return new ClientJobRequestDTO
+            {
+                Id = request.Id,
+                Title = request.Title,
+                Description = request.Description,
+                JobApprovedId = request.JobApprovedId,
+                Open = request.Open,
+                RequestedOn = request.RequestedOn,
+                ShowToEveryone = request.ShowToEveryone,
+                // TODO: add support for images
+                ImagesUrl = new(),
+                StartDate = request.StartDate
+            };
+        }
+
+        [MapperRequiredMapping(RequiredMappingStrategy.Target)]
+        public static partial MessageResponse ToMessageDTO(this Message message);
+
+        [MapperRequiredMapping(RequiredMappingStrategy.Target)]
+        public static partial TradesManJobResponseDTO ToTradesManJobResponseDTO(this TradesManJobResponse response);
 
         [MapperRequiredMapping(RequiredMappingStrategy.Target)]
         public static partial FindTradesManDTO ToFindTradesManDTO(this User user);

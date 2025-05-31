@@ -1,10 +1,12 @@
-﻿namespace Registry.Errors.Repositories
+﻿namespace Registry.Errors
 {
+
     [Serializable]
-    public class ConflictException : RepositoryException
+    public class ConflictException : ApplicationException
     {
-        public ConflictException() { }
+        public ConflictException() : base("Conflict") { }
         public ConflictException(string message) : base(message) { }
         public ConflictException(string message, Exception inner) : base(message, inner) { }
     }
+
 }

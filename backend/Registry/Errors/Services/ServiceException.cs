@@ -4,7 +4,7 @@ namespace Registry.Errors.Services
 {
 
     [Serializable]
-    public class ServiceException : Exception
+    public class ServiceException : ApplicationException
     {
         public ServiceException() { }
         public ServiceException(string message) : base(message) { }

@@ -10,12 +10,14 @@ namespace Registry.Controllers
     public class ConversationsController : ControllerBase
     {
         private readonly ITradesManService _service;
+        private readonly IJobsService _serviceJobs;
 
         private readonly IUserService _userService;
-        public ConversationsController(ITradesManService service, IUserService userService)
+        public ConversationsController(ITradesManService service, IUserService userService, IJobsService serviceJobs)
         {
             _service = service;
             _userService = userService;
+            _serviceJobs = serviceJobs;
         }
 
         [Authorize]
@@ -24,17 +26,17 @@ namespace Registry.Controllers
         {
             var user = await _userService.GetByClaims(User);
 
-            var conversations = await _service.GetConversations(user);
+            var conversations = await _serviceJobs.GetConversations(user);
 
             return Ok(conversations);
         }
 
         [Authorize]
-        [HttpPut("users/{WithUserId}")]
-        public async Task<IActionResult> GetOrCreateConversation(Guid WithUserId)
+        [HttpPut("jobRequests/{clientJobRequestId}/tradesman/{tradesManId}")]
+        public async Task<IActionResult> GetOrCreateConversation(Guid clientJobRequestId, Guid tradesManId)
         {
             var user = await _userService.GetByClaims(User);
-            var conversation = await _service.GetOrCreateConversation(user, WithUserId);
+            var conversation = await _serviceJobs.GetOrCreateConversation(user, clientJobRequestId, tradesManId);
 
             return Ok(conversation);
         }
@@ -45,7 +47,7 @@ namespace Registry.Controllers
         {
             var user = await _userService.GetByClaims(User);
 
-            var conversations = await _service.GetMessages(user, conversationId);
+            var conversations = await _serviceJobs.GetMessages(user, conversationId);
 
             return Ok(conversations);
         }
@@ -56,7 +58,7 @@ namespace Registry.Controllers
         {
             var user = await _userService.GetByClaims(User);
 
-            var r = await _service.SendMessage(user, conversationId, request);
+            var r = await _serviceJobs.SendMessage(user, conversationId, request);
 
             return Ok(r);
 

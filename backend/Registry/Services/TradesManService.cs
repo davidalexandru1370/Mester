@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Registry.DTO;
-using Registry.DTO.Requests;
-using Registry.DTO.Responses;
 using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
@@ -167,97 +165,6 @@ namespace Registry.Services
                     ImageUrl = x.Speciality.ImageUrl,
                 }).ToList()
             };
-        }
-
-        // TODO: return something
-        public async Task CreateRequest(User user, User tradesMan, string description)
-        {
-            var request = new ClientRequest
-            {
-                From = user,
-                To = tradesMan,
-                Description = description
-            };
-            await _context.ClientRequests.AddAsync(request);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<List<ConversationDTO>> GetConversations(User user)
-        {
-            var r = _context.Conversations
-                .Include(c => c.User1)
-                .Include(c => c.User2)
-                .Include(c => c.Messages)
-                .Where(c => c.User1.Id == user.Id || c.User2.Id == user.Id)
-                .AsAsyncEnumerable();
-            List<ConversationDTO> conversations = [];
-            await foreach (var c in r)
-            {
-                var dto = c.ToConversationDTO(user.Id);
-                if (dto.LastMessage is null) continue;
-                conversations.Add(dto);
-            }
-            return conversations;
-        }
-
-        public async Task<List<MessageDTO>?> GetMessages(User user, Guid conversationId)
-        {
-            var conversation = await _context.Conversations
-                .Include(c => c.Messages)
-                .Include(c => c.User1)
-                .Include(c => c.User2)
-                // the second if is only used to make sure the user doesn't get messages from another user
-                .Where(c => c.Id == conversationId && (c.User1.Id == user.Id || c.User2.Id == user.Id))
-                .FirstOrDefaultAsync();
-            if (conversation is null) return null;
-
-            return conversation.Messages
-                .Select(m => m.ToMessageDTO(user.Id)).ToList();
-        }
-
-        public async Task<SendMessageResponse> SendMessage(User user, Guid conversationId, SendMessageRequest sendMessage)
-        {
-            var conversation = await _context.Conversations.FindAsync(conversationId) ?? throw new ServiceException("Conversation was not found");
-            var message = new Message
-            {
-                From = user,
-                Sent = DateTime.Now,
-                Text = sendMessage.Text,
-                Conversation = conversation,
-            };
-            await _context.Messages.AddAsync(message);
-            await _context.SaveChangesAsync();
-            return message.ToSendMessageResponse();
-        }
-
-        public async Task<ConversationDTO> GetOrCreateConversation(User user, Guid withUserId)
-        {
-            var user1Id = user.Id;
-            var user2Id = withUserId;
-            if (user1Id > user2Id)
-            {
-                var tmp = user1Id;
-                user1Id = user2Id;
-                user2Id = tmp;
-            }
-            var conversation = await _context.Conversations
-                .Include(c => c.User1)
-                .Include(c => c.User2)
-                .FirstOrDefaultAsync(c => c.User1.Id == user1Id && c.User2.Id == user2Id);
-            if (conversation is not null)
-            {
-                return conversation.ToConversationDTO(user.Id);
-            }
-            var user1 = await _context.Users.FirstOrDefaultAsync(u => u.Id == user1Id) ?? throw new ServiceException($"User id {user1Id} doesn't exist");
-            var user2 = await _context.Users.FirstOrDefaultAsync(u => u.Id == user2Id) ?? throw new ServiceException($"User id {user1Id} doesn't exist");
-            var c = new Conversation
-            {
-                User1 = user1,
-                User2 = user2,
-            };
-            await _context.Conversations.AddAsync(c);
-            await _context.SaveChangesAsync();
-            return c.ToConversationDTO(user.Id);
         }
 
         public async Task<List<FindTradesManDTO>> FindTradesMen(string pattern, int limit)

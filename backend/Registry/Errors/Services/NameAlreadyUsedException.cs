@@ -2,7 +2,7 @@
 {
 
     [Serializable]
-    public class NameAlreadyUsedException : ServiceException
+    public class NameAlreadyUsedException : ConflictException
     {
         public NameAlreadyUsedException() : base("Username already used") { }
         public NameAlreadyUsedException(string message) : base(message) { }
