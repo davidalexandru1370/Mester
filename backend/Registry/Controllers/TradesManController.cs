@@ -30,6 +30,13 @@ namespace Registry.Controllers
             var r = await _service.GetTradesManInfo(id);
             return Ok(r);
         }
+        [Route("specialities")]
+        [HttpGet]
+        public async Task<ActionResult> GetSpecialities()
+        {
+            var r = await _service.GetSpecialities();
+            return Ok(r);
+        }
     }
     
     
