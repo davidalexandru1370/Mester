@@ -4,6 +4,9 @@ import axios from "axios";
 import useToken from "./useToken";
 import { useEffect, useRef, useState } from "react";
 import { UserDetailsDto } from "@/context/UserContext";
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
 
 export default function () {
   
@@ -157,7 +160,9 @@ export default function () {
             {userDetails === null ? (
               <></>
             ) : (
-              <div>
+              <Container>
+                <Row>
+                <Col xs={2}>
                 <div
                   style={{
                     display: "flex",
@@ -198,7 +203,8 @@ export default function () {
                     Update Profile Image
                   </button>
                 </div>
-                <h3 className="Auth-form-title">Update Profile</h3>
+                </Col>
+          <Col xs={5}>
           <form className="Auth-form">
           <div className="Auth-form-content">
             <h4 className="Auth-form-title">Add specialities</h4>
@@ -239,6 +245,22 @@ export default function () {
             </div>
           </div>
           </form>
+          </Col>
+          <Col xs={5}>
+          <h4 className="Auth-form-title">Specialities that can be added</h4>
+          <Container>
+            <Row>
+          {specialities?.map(function fn(sp: any) {
+                    return (
+                        <Col>
+                            <button type="button" className="btn btn-info" onClick={() => {setName(sp)}} style={{marginBottom: 10,}}>
+                                {sp}
+                            </button>
+                        </Col>
+                    );
+                })}
+            </Row>
+          </Container>
           <h4 className="Auth-form-title">Currently added specialities</h4>
            <table className="table table-dark" align="center">
                 <thead>
@@ -266,6 +288,9 @@ export default function () {
                     );
                 })}
             </table>
+          </Col>
+          </Row>
+          <Row>
           <div className="d-grid gap-2 mt-3">
               <div className="form-group mt-3">
               <label>Description</label>
@@ -298,12 +323,13 @@ export default function () {
               />
             </div>
           <div className="d-grid gap-2 mt-3">
-            <button type="submit" className="btn btn-primary" onClick={becomer}>
+            <button type="submit" className="btn btn-success" onClick={becomer}>
               Become a tradesman
             </button>
           </div>
               </div>
-              </div>
+              </Row>
+              </Container>
             )}
           </div>
         </form>
