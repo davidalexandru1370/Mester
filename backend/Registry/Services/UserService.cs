@@ -21,12 +21,15 @@ public class UserService : IUserService
 
     private readonly TimeSpan tokenLifetime;
     private readonly IRepositoryUser _repoUsers;
+    private readonly IImageService _imageService;
 
-    public UserService(IRepositoryUser repoUsers, string tokenSecret, TimeSpan tokenLifetime)
+    public UserService(IRepositoryUser repoUsers, string tokenSecret, TimeSpan tokenLifetime, IImageService imageService)
     {
         this.tokenSecret = tokenSecret;
         this.tokenLifetime = tokenLifetime;
         _repoUsers = repoUsers;
+        _imageService = imageService;
+
     }
 
     public async Task<User> GetByClaims(ClaimsPrincipal claims)
@@ -43,6 +46,7 @@ public class UserService : IUserService
 
         var claims = new List<Claim> {
             new(JwtRegisteredClaimNames.Email, request.Email),
+            new("Id", request.Id.ToString())
         };
 
         foreach (var claimPair in request.CustomClaims)
@@ -145,7 +149,24 @@ public class UserService : IUserService
         {
             Name = user.Name,
             Id = user.Id,
+            Email = user.Email,
+            ImageUrl = user.ImageUrl,
             IsTradesman = !(user.TradesManProfile is null)
+        };
+    }
+
+    public async Task<UserImageDTO> UploadUserImage(IFormFile image, Guid userId)
+    {
+        var imageUploadUrl = await _imageService.UploadImage(image);
+
+        if (!String.IsNullOrEmpty(imageUploadUrl))
+        {
+            await _repoUsers.UpdateUserImage(userId, imageUploadUrl);
+        }
+
+        return new UserImageDTO
+        {
+            ImageUrl = imageUploadUrl,
         };
     }
 }

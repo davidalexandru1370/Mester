@@ -6,6 +6,7 @@ using Registry.DTO.Requests;
 using Registry.Errors.Services;
 using Registry.Identity;
 using Registry.Models;
+using Registry.Models.Request;
 using Registry.Services.Interfaces;
 
 namespace Registry.Controllers;
@@ -51,6 +52,7 @@ public class UserController : ControllerBase
         var token = _authenticationService.CreateToken(new TokenRegistrationRequest
         {
             Email = loginUserData.Email,
+            Id = user.Id,
             CustomClaims = []
         });
         return TypedResults.Ok(token);
@@ -117,5 +119,14 @@ public class UserController : ControllerBase
     {
         var r = await _tradesManService.FindTradesMen(pattern, limit);
         return Ok(r);
+    }
+
+    [Authorize]
+    [HttpPut("update-avatar")]
+    public async Task<ActionResult<UserImageDTO>> UploadUserImage([FromForm] UpdateUserImageRequest request)
+    {
+        var userId = User.GetUserId();
+        var uploadImage = await _authenticationService.UploadUserImage(request.Image, userId);
+        return Ok(uploadImage);
     }
 }

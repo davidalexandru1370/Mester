@@ -19,7 +19,7 @@ namespace Registry.Repository
             {
                 var createdUser = await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
-                
+
                 return createdUser.Entity;
             }
             catch (DbUpdateException e)
@@ -54,7 +54,7 @@ namespace Registry.Repository
         {
             var user = await _context.Users
                 .Where(u => u.Id == userId)
-                .Include (u => u.TradesManProfile)
+                .Include(u => u.TradesManProfile)
                 .FirstOrDefaultAsync();
 
             if (user is null)
@@ -63,6 +63,21 @@ namespace Registry.Repository
             }
 
             return user;
+        }
+
+        public async Task UpdateUserImage(Guid userId, string imageUrl)
+        {
+            var user = await _context.Users.Where(x => x.Id == userId).FirstOrDefaultAsync();
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
+
+            user.ImageUrl = imageUrl;
+            _context.Users.Update(user);
+
+            await _context.SaveChangesAsync();
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.Security.Claims;
+﻿using Registry.Errors.Services;
+using Registry.Models;
+using System.Security.Claims;
 
 namespace Registry.Identity
 {
@@ -6,14 +8,10 @@ namespace Registry.Identity
     {
         public static Guid GetUserId(this ClaimsPrincipal claimsPrincipal)
         {
-            if (claimsPrincipal is null)
-            {
-                throw new ApplicationException("Invalid user");
-            }
-
             try
             {
-                var userId = Guid.Parse(claimsPrincipal.Claims.FirstOrDefault(c => c.Type == "Id").Value);
+                var value = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == nameof(TokenRegistrationRequest.Id))?.Value ?? throw new UnauthorizedException();
+                var userId = Guid.Parse(value);
                 return userId;
             }
             catch (FormatException)
