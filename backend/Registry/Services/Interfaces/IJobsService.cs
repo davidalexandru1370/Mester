@@ -11,7 +11,7 @@ namespace Registry.Services.Interfaces
         Task<TradesManJobResponseDTO> AddTradesManJobResponse(User tradesMan, CreateTradesManJobResponse request);
         Task<List<ClientJobRequestDTO>> AllClientRequests(User user);
         Task<List<ConversationWithLastOfferDTO>> GetConversationsLastOffer(User user, Guid jobRequestDetails);
-        Task<Guid> CreateClientRequest(User user, CreateClientJobRequest request);
+        Task<ClientJobRequestDTO> CreateClientRequest(User user, CreateClientJobRequest request);
         Task EndJob(User tradesMan, Guid jobId, DateTime endDate);
         Task<List<ConversationDTO>> GetConversations(User user);
         Task<List<MessageOrResponsesDTO>?> GetMessages(User user, Guid conversationId);
