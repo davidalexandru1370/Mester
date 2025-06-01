@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Registry.DTO.Requests;
+using Registry.Errors.Services;
 using Registry.Services.Interfaces;
 
 namespace Registry.Controllers
@@ -32,11 +33,12 @@ namespace Registry.Controllers
         }
 
         [Authorize]
-        [HttpPut("jobRequests/{clientJobRequestId}/tradesman/{tradesManId}")]
-        public async Task<IActionResult> GetOrCreateConversation(Guid clientJobRequestId, Guid tradesManId)
+        [HttpPut("jobRequests/{clientJobRequestId}")]
+        public async Task<IActionResult> GetOrCreateConversation(Guid clientJobRequestId)
         {
-            var user = await _userService.GetByClaims(User);
-            var conversation = await _serviceJobs.GetOrCreateConversation(user, clientJobRequestId, tradesManId);
+            var tradesMan = await _userService.GetByClaims(User);
+            if (tradesMan.TradesManProfile is null) throw new UnauthorizedException();
+            var conversation = await _serviceJobs.GetOrCreateConversation(tradesMan, clientJobRequestId);
 
             return Ok(conversation);
         }
@@ -61,7 +63,6 @@ namespace Registry.Controllers
             var r = await _serviceJobs.SendMessage(user, conversationId, request);
 
             return Ok(r);
-
         }
     }
 }

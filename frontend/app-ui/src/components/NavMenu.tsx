@@ -47,6 +47,9 @@ export default function NavMenu() {
           <NavItem>
             <NavLink tag={Link} className="text-dark" to="/conversations">Conversations</NavLink>
           </NavItem>
+          <NavItem>
+            <NavLink tag={Link} className="text-dark" to="/requests">Requests</NavLink>
+          </NavItem>
         </ul>
         <div className="ms-auto">
           <Dropdown isOpen={dropdownOpen} toggle={toggle} direction="down">

@@ -38,9 +38,9 @@ namespace Registry
             };
         }
 
-        public static MessageAndResponsesDTO ToMessageAndResponseDTO(this Message message, Guid currentUser)
+        public static MessageOrResponsesDTO ToMessageAndResponseDTO(this Message message, Guid currentUser)
         {
-            return new MessageAndResponsesDTO
+            return new MessageOrResponsesDTO
             {
                 IsMe = message.FromId == currentUser,
                 Message = message.ToMessageDTO(),
@@ -49,9 +49,9 @@ namespace Registry
             };
         }
 
-        public static MessageAndResponsesDTO ToMessageAndResponseDTO(this TradesManJobResponse response, Guid currentUser)
+        public static MessageOrResponsesDTO ToMessageAndResponseDTO(this TradesManJobResponse response, Guid currentUser)
         {
-            return new MessageAndResponsesDTO
+            return new MessageOrResponsesDTO
             {
                 IsMe = response.TradesManId == currentUser,
                 ClientRequestResponse = response.ToTradesManJobResponseDTO(),

@@ -14,7 +14,7 @@ public class ImageService : IImageService
 
     public ImageService()
     {
-        
+
     }
 
     public async Task<string> UploadImage(IFormFile destinationImage)
@@ -23,7 +23,7 @@ public class ImageService : IImageService
         var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
 
         var cancellation = new CancellationTokenSource();
-        var stream = destinationImage.OpenReadStream();
+        await using var stream = destinationImage.OpenReadStream();
 
         var task = new FirebaseStorage(
                 Bucket,
@@ -49,11 +49,7 @@ public class ImageService : IImageService
         }
         catch (Exception ex)
         {
-            throw new ServiceException("Error while uploading the image");
-        }
-        finally
-        {
-            await stream.DisposeAsync();
+            throw new ServiceException("Error while uploading the image", ex);
         }
     }
 }

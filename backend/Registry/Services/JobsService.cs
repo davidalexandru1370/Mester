@@ -38,7 +38,7 @@ namespace Registry.Services
             return conversations;
         }
 
-        public async Task<List<MessageAndResponsesDTO>?> GetMessages(User user, Guid conversationId)
+        public async Task<List<MessageOrResponsesDTO>?> GetMessages(User user, Guid conversationId)
         {
             var conversation = await _context.Conversations
                 .Include(c => c.Messages)
@@ -71,27 +71,27 @@ namespace Registry.Services
             return message.ToSendMessageResponse();
         }
 
-        public async Task<ConversationDTO> GetOrCreateConversation(User user, Guid clientJobRequestId, Guid tradesManId)
+        public async Task<ConversationDTO> GetOrCreateConversation(User tradesMan, Guid clientJobRequestId)
         {
             var conversation = await _context.Conversations
                 .Include(c => c.Messages)
                 .Include(c => c.Responses)
-                .FirstOrDefaultAsync(c => c.Request.Id == clientJobRequestId && c.TradesMan.Id == tradesManId);
+                .FirstOrDefaultAsync(c => c.Request.Id == clientJobRequestId && c.TradesMan.Id == tradesMan.Id);
 
             if (conversation is not null)
             {
-                return conversation.ToConversationDTO(user.Id);
+                return conversation.ToConversationDTO(tradesMan.Id);
             }
             var request = await _context.ClientRequests.FirstOrDefaultAsync(r => r.Id == clientJobRequestId) ?? throw new ServiceException("Invalid client job request id");
-            var tradesMan = await _context.Users.FirstOrDefaultAsync(u => u.Id == tradesManId && u.TradesManProfile != null) ?? throw new ServiceException($"Tradesman with id {tradesManId} doesn't exist");
             var c = new Conversation
             {
                 RequestId = request.Id,
-                TradesManId = tradesManId,
+                TradesManId = tradesMan.Id,
+                TradesMan = tradesMan
             };
             await _context.Conversations.AddAsync(c);
             await _context.SaveChangesAsync();
-            return c.ToConversationDTO(user.Id);
+            return c.ToConversationDTO(tradesMan.Id);
         }
 
         public async Task<Guid> CreateClientRequest(User user, CreateClientJobRequest request)
@@ -109,7 +109,7 @@ namespace Registry.Services
             return jobRequest.Id;
         }
 
-        public async Task<ConversationDTO> SendClientRequestToConversation(User client, Guid clientRequestId, Guid tradesManId)
+        public async Task<ConversationDTO> SendClientRequestToTradesMan(User client, Guid clientRequestId, Guid tradesManId)
         {
             var r = await _context.Conversations.Where(c => c.TradesManId == tradesManId && c.RequestId == clientRequestId).FirstOrDefaultAsync();
             if (r is not null)
@@ -190,6 +190,22 @@ namespace Registry.Services
             r.EndDate = endDate;
             _context.Jobs.Update(r);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<ClientJobRequestDTO>> AllClientRequests(User user)
+        {
+            var requests = _context.ClientRequests.Where(r => r.InitiatedById == user.Id).AsAsyncEnumerable();
+            var r = new List<ClientJobRequestDTO>();
+            await foreach (var request in requests)
+            {
+                r.Add(request.ToClientJobRequestDTO());
+            }
+            return r;
+        }
+
+        public async Task<List<ConversationWithLastOfferDTO>> GetConversationsLastOffer(User user, Guid jobRequestDetails)
+        {
+            throw new NotImplementedException();
         }
     }
 }

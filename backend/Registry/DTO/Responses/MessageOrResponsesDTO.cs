@@ -1,6 +1,6 @@
 ﻿namespace Registry.DTO.Responses
 {
-    public class MessageAndResponsesDTO
+    public class MessageOrResponsesDTO
     {
         public required bool IsMe { get; set; }
         public required DateTime Sent { get; set; }

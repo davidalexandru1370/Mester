@@ -4,8 +4,8 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
-import { Button, Card, CardBody, Input } from "reactstrap";
-import { ApiError, Conversation, findTradesMan, FindTradesMan, getConversation, getConversations, getMessages, Message, sendMessage } from "@/api";
+import { Button, Card, CardBody, CardHeader, Input } from "reactstrap";
+import { ApiError, Conversation, findTradesMan, FindTradesMan, getConversation, getConversations, getMessages, Message, MessageOrResponse, sendMessage } from "@/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Plus } from "lucide-react";
 
@@ -14,7 +14,7 @@ import { Plus } from "lucide-react";
 export default function () {
     const [conversations, setConversations] = useState<Conversation[]>([]);
 
-    const [messages, setMessages] = useState<Message[] | null>(null);
+    const [messages, setMessages] = useState<MessageOrResponse[] | null>(null);
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [newUserName, setNewUserName] = useState("");
@@ -66,8 +66,8 @@ export default function () {
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
 
     useEffect(() => {
+        setMessages(null);
         if (!selectedConversation) {
-            setMessages(null);
             return;
         }
         let controller = new AbortController();
@@ -90,10 +90,11 @@ export default function () {
                     conversationId: selectedConversation.id,
                     text: message
                 }, token);
-                const messageResponse: Message = {
+                const messageResponse: MessageOrResponse = {
+                    isMe: true,
+                    type: "message",
                     id: r.id,
                     from: r.from,
-                    isMe: true,
                     text: r.text
                 };
                 setMessages((prev) => {
@@ -115,17 +116,17 @@ export default function () {
     const onClickUserSuggestion = (user: FindTradesMan) => {
         setDialogOpen(false);
         setNewUserName("");
-        (async () => {
-            try {
-                const conversation = await getConversation(user.id, token);
-                setConversations([conversation, ...conversations]);
-                setSelectedConversation(conversation);
-            } catch (error) {
-                if (error instanceof ApiError) {
-                    toast.error(`${error.message}`);
-                }
-            }
-        })();
+        // (async () => {
+        //     try {
+        //         const conversation = await getConversation(user.id, token);
+        //         setConversations([conversation, ...conversations]);
+        //         setSelectedConversation(conversation);
+        //     } catch (error) {
+        //         if (error instanceof ApiError) {
+        //             toast.error(`${error.message}`);
+        //         }
+        //     }
+        // })();
     }
     return (
         <div>
@@ -143,10 +144,11 @@ export default function () {
                                 }`}
                             onClick={() => setSelectedConversation(conv)}
                         >
+                            <CardHeader>{conv.clientRequest.title}</CardHeader>
                             <CardBody className="p-4">
-                                <p className="font-semibold">{conv.with.name}</p>
+                                <p className="font-semibold">{conv.tradesMan.name}</p>
                                 {conv.lastMessage && <p className="text-sm text-gray-600">
-                                    {conv.lastMessage.isMe ? "You: " : ""} {conv.lastMessage.text}
+                                    {conv.lastMessage.isMe ? "You: " : ""} {conv.lastMessage.type === "message" ? conv.lastMessage.text : `${conv.lastMessage.workmanshipAmount} by ${conv.lastMessage.AproximationEndDate}`}
                                 </p>}
                             </CardBody>
                         </Card>
@@ -164,14 +166,33 @@ export default function () {
                                     className={`flex ${msg.isMe ? "justify-end" : "justify-start"
                                         }`}
                                 >
-                                    <div
-                                        className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${msg.isMe
-                                            ? "bg-blue-500 rounded-br-none"
-                                            : "bg-gray-400 rounded-bl-none"
-                                            }`}
-                                    >
-                                        {msg.text}
-                                    </div>
+                                    {msg.type === "message" ?
+                                        <div
+                                            className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${msg.isMe
+                                                ? "bg-blue-500 rounded-br-none"
+                                                : "bg-gray-400 rounded-bl-none"
+                                                }`}
+                                        >
+                                            {msg.text}
+                                        </div> :
+                                        <div
+                                            className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${msg.isMe
+                                                ? "bg-blue-500 rounded-br-none"
+                                                : "bg-gray-400 rounded-bl-none"
+                                                }`}
+                                        >
+                                            <h4>Proposed resolution</h4>
+                                            <p>Can be done by {msg.AproximationEndDate}</p>
+                                            <p>The workmanship will be {msg.workmanshipAmount}</p>
+                                            <Button
+                                                className="mt-2"
+                                                onClick={() => {
+                                                    // Handle job acceptance logic here
+                                                    toast.success("Job accepted!");
+                                                }}>Accept proposal</Button>
+                                        </div>
+                                    }
+
                                 </div>
                             ))}
                         </div>

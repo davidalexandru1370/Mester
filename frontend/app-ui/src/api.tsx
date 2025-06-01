@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Interface } from "readline";
 
 const BASE_URL = "https://localhost:8081";
 
@@ -70,9 +71,6 @@ interface LoginResponse {
     jwt: string
 }
 
-/**
- * @throws OnlyOtherError
- */
 export async function loginUser(email: string, password: string, phoneNumber: string, signal?: AbortSignal): Promise<LoginResponse> {
     try {
         const response = await axios.post(
@@ -129,14 +127,56 @@ export interface ConversationUser {
 export interface Message {
     id: string;
     from: ConversationUser;
-    isMe: boolean;
     text: string
+}
+
+export interface ClientJobRequestWithoutId {
+    id?: string;
+    requestedOn: any;
+    startDate?: any;
+    title: string;
+    description: string;
+    showToEveryone: boolean;
+    open: boolean;
+    imagesUrl: string[];
+    jobApprovedId?: string;
+}
+
+export interface ClientJobRequest {
+    id: string;
+    requestedOn: any;
+    startDate?: any;
+    title: string;
+    description: string;
+    showToEveryone: boolean;
+    open: boolean;
+    imagesUrl: string[];
+    jobApprovedId?: string;
+}
+
+interface MessageOrResponseApi {
+    isMe: boolean;
+    message?: Message;
+    response?: TradesManJobResponse;
+}
+
+export type MessageOrResponse = MessageOnly | ResponseOnly;
+
+export interface MessageOnly extends Message {
+    type: "message";
+    isMe: boolean;
+}
+
+export interface ResponseOnly extends TradesManJobResponse {
+    type: "response";
+    isMe: boolean;
 }
 
 export interface Conversation {
     id: string;
-    with: ConversationUser;
-    lastMessage?: Message;
+    clientRequest: ClientJobRequest;
+    tradesMan: ConversationUser;
+    lastMessage: MessageOrResponse;
 }
 
 export async function getConversations(token: string, signal?: AbortSignal): Promise<Conversation[]> {
@@ -159,7 +199,25 @@ export async function getConversations(token: string, signal?: AbortSignal): Pro
     }
 }
 
-export async function getMessages(conversationId: string, token: string, signal?: AbortSignal): Promise<Message[]> {
+function convertMessageOrResponse(data: MessageOrResponseApi): MessageOrResponse {
+    if (data.message) {
+        return {
+            type: "message",
+            isMe: data.isMe,
+            ...data.message
+        };
+    }
+    if (data.response) {
+        return {
+            type: "response",
+            isMe: data.isMe,
+            ...data.response
+        };
+    }
+    throw new Error("Invalid data format");
+}
+
+export async function getMessages(conversationId: string, token: string, signal?: AbortSignal): Promise<MessageOrResponse[]> {
     try {
         const response = await axios
             .get(
@@ -172,7 +230,8 @@ export async function getMessages(conversationId: string, token: string, signal?
                     signal
                 },
             );
-        return response.data as Message[];
+        let data = response.data as MessageOrResponseApi[];
+        return data.map(convertMessageOrResponse);
     }
     catch (e) {
         throw new ApiError(convertError(e))
@@ -208,11 +267,16 @@ export async function findTradesMan(params: { pattern: string, limit?: number },
     }
 }
 
-export async function getConversation(withUserId: string, token: string, signal?: AbortSignal): Promise<Conversation> {
+export async function getConversation(props: {
+    clientJobRequestId: string,
+    tradesManId: string
+},
+    token: string, signal?: AbortSignal): Promise<Conversation> {
+    const { clientJobRequestId, tradesManId } = props;
     try {
         const response = await axios
             .put(
-                `${BASE_URL}/api/Conversations/users/${withUserId}`,
+                `${BASE_URL}/api/Conversations/jobRequests/${clientJobRequestId}/tradesmen/${tradesManId}`,
                 undefined,
                 {
                     timeout: 5000,
@@ -262,3 +326,60 @@ export async function sendMessage(params: {
         throw new ApiError(convertError(e))
     }
 }
+
+
+export async function clientGetRequests(token: string, signal?: AbortSignal): Promise<ClientJobRequest[]> {
+    try {
+        const response = await axios
+            .get(
+                `${BASE_URL}/api/Job/requests`,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+        return response.data as ClientJobRequest[];
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}
+
+
+export interface ClientJobResponsesConversation {
+    id: string;
+    tradesMan: ConversationUser;
+    response?: TradesManJobResponse;
+}
+
+export async function clientGetRequestsConversations(requestId: string, token: string, signal?: AbortSignal): Promise<ClientJobResponsesConversation[]> {
+    try {
+        const response = await axios
+            .get(
+                `${BASE_URL}/api/Job/requests/${requestId}/conversations`,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+        return response.data as ClientJobResponsesConversation[];
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}
+
+interface TradesManJobResponse {
+    id: string;
+    clientJobRequestId: string;
+    workmanshipAmount: number;
+    AproximationEndDate: any;
+}
+
+

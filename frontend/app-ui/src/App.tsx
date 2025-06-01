@@ -7,6 +7,7 @@ import Profile from "./components/Profile.tsx";
 import Logout from "./components/Logout.tsx";
 import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
 import Conversations from "./components/message/Conversations.tsx";
+import Requests from "./components/message/Requests.tsx";
 
 function App() {
   return (
@@ -34,6 +35,11 @@ function App() {
         <Route path="/conversations" element={
           <ProtectedRoute>
             <Conversations />
+          </ProtectedRoute>
+        } />
+        <Route path="/requests" element={
+          <ProtectedRoute>
+            <Requests />
           </ProtectedRoute>
         } />
       </Routes>
