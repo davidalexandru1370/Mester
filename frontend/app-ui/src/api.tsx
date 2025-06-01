@@ -132,8 +132,8 @@ export interface Message {
 
 export interface ClientJobRequestWithoutId {
     id?: string;
-    requestedOn: any;
-    startDate?: any;
+    requestedOn: string;
+    startDate?: string;
     title: string;
     description: string;
     showToEveryone: boolean;
@@ -144,8 +144,8 @@ export interface ClientJobRequestWithoutId {
 
 export interface ClientJobRequest {
     id: string;
-    requestedOn: any;
-    startDate?: any;
+    requestedOn: string;
+    startDate?: string;
     title: string;
     description: string;
     showToEveryone: boolean;
@@ -267,6 +267,28 @@ export async function findTradesMan(params: { pattern: string, limit?: number },
     }
 }
 
+export async function sendClientRequestToConversation(clientRequest: string, tradesManId: string, token: string, signal?: AbortSignal): Promise<undefined> {
+    try {
+        await axios
+            .post(
+                `${BASE_URL}/api/Requests/${clientRequest}/send/tradesmen/${tradesManId}`,
+                undefined,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+
+}
+
 export async function getConversation(props: {
     clientJobRequestId: string,
     tradesManId: string
@@ -296,7 +318,7 @@ export async function getConversation(props: {
 export interface SendMessageResponse {
     id: string;
     text: string;
-    sent: any;
+    sent: string;
     from: ConversationUser;
 }
 
@@ -332,7 +354,7 @@ export async function clientGetRequests(token: string, signal?: AbortSignal): Pr
     try {
         const response = await axios
             .get(
-                `${BASE_URL}/api/Job/requests`,
+                `${BASE_URL}/api/Requests`,
                 {
                     timeout: 5000,
                     headers: {
@@ -359,7 +381,7 @@ export async function clientGetRequestsConversations(requestId: string, token: s
     try {
         const response = await axios
             .get(
-                `${BASE_URL}/api/Job/requests/${requestId}/conversations`,
+                `${BASE_URL}/api/Requests/${requestId}/conversations`,
                 {
                     timeout: 5000,
                     headers: {
@@ -379,7 +401,48 @@ interface TradesManJobResponse {
     id: string;
     clientJobRequestId: string;
     workmanshipAmount: number;
-    AproximationEndDate: any;
+    AproximationEndDate: string;
 }
 
 
+export async function createRequest(params: ClientJobRequestWithoutId, token: string, signal?: AbortSignal): Promise<ClientJobRequest> {
+    try {
+        const response = await axios
+            .post(
+                `${BASE_URL}/api/Requests`,
+                params,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+        return response.data as ClientJobRequest;
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}
+
+export async function updateRequest(params: ClientJobRequest, token: string, signal?: AbortSignal): Promise<ClientJobRequest> {
+    try {
+        const response = await axios
+            .patch(
+                `${BASE_URL}/api/Requests/${params.id}`,
+                params,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+        return response.data as ClientJobRequest;
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
@@ -35,10 +35,13 @@ export default function () {
                 }, token, controller.signal);
                 setUsersSuggestions(suggestions);
             } catch (error) {
-                if (axios.isCancel(error)) {
-                    console.log("Request canceled", error.message);
+                if (error instanceof ApiError) {
+                    if (error.error.type !== "aborted") {
+                        toast.error(`${error.message}`);
+                    }
+                    return;
                 } else {
-                    toast.error("Failed to fetch user suggestions");
+                    throw error;
                 }
             }
         })();
@@ -53,9 +56,17 @@ export default function () {
     useEffect(() => {
         let controller = new AbortController();
         (async () => {
-            const conversations = await getConversations(token, controller.signal);
-            setConversations(conversations);
-            console.log(conversations);
+            try {
+                const conversations = await getConversations(token, controller.signal);
+                setConversations(conversations);
+                console.log(conversations);
+            } catch (error) {
+                if (error instanceof ApiError) {
+                    if (error.error.type !== "aborted") {
+                        toast(error.message)
+                    }
+                }
+            }
         })();
 
         return () => {
@@ -104,7 +115,9 @@ export default function () {
                 setMessage("");
             } catch (error) {
                 if (error instanceof ApiError) {
-                    toast.error(`${error.message}`);
+                    if (error.error.type !== "aborted") {
+                        toast.error(`${error.message}`);
+                    }
                     return;
                 } else {
                     throw error;
@@ -131,12 +144,10 @@ export default function () {
     return (
         <div>
             <NavMenu />
+            <ToastContainer />
             <div className="flex h-screen bg-gray-100">
                 {/* Conversations List */}
                 <div className="w-1/3 border-r bg-white p-4 overflow-y-auto">
-                    <Button size="icon" variant="outline" onClick={() => setDialogOpen(true)}>
-                        <Plus className="w-5 h-5" />
-                    </Button>
                     {conversations.map((conv) => (
                         <Card
                             key={conv.id}

@@ -5,11 +5,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, Input, Label } from "reactstrap";
-import { ApiError, clientGetRequests, clientGetRequestsConversations, ClientJobRequest, ClientJobResponsesConversation, Conversation, findTradesMan, FindTradesMan, getConversation, getConversations, getMessages, Message, MessageOrResponse, sendMessage } from "@/api";
+import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestWithoutId, ClientJobResponsesConversation, Conversation, createRequest, findTradesMan, FindTradesMan, getConversation, getConversations, getMessages, Message, MessageOrResponse, sendMessage, updateRequest } from "@/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Plus } from "lucide-react";
 import { Checkbox } from "../ui/checkbox";
 import RequestDetails from "./RequestDetails";
+import { request } from "http";
 
 
 export default function () {
@@ -21,7 +22,7 @@ export default function () {
     const [newUserName, setNewUserName] = useState("");
     const [usersSuggestions, setUsersSuggestions] = useState<FindTradesMan[] | null>([]);
     const [selectedRequest, setSelectedRequest] = useState<ClientJobRequest | null>(null);
-
+    const [disableUpdateButton, setDisableUpdateButton] = useState(false);
     const handleImageChange = (request: ClientJobRequest, index: number, value: string) => {
         const updatedImages = [...request.imagesUrl];
         updatedImages[index] = value;
@@ -73,31 +74,26 @@ export default function () {
     useEffect(() => {
         let controller = new AbortController();
         (async () => {
-            const requests = await clientGetRequests(token, controller.signal);
-            setClientRequests(requests);
+            try {
+                const requests = await clientGetRequests(token, controller.signal);
+                setClientRequests(requests);
+            }
+            catch (error) {
+                if (error instanceof ApiError) {
+                    if (error.error.type !== "aborted") {
+                        toast.error(`${error.message}`);
+                    }
+                    return;
+                } else {
+                    throw error;
+                }
+            }
         })();
 
         return () => {
             controller.abort();
         }
     }, []);
-
-
-    useEffect(() => {
-        setTradesManResponses(null);
-        if (!selectedRequest) {
-            return;
-        }
-        let controller = new AbortController();
-        (async () => {
-            // TODO: fetch details page
-            const messages = await clientGetRequestsConversations(selectedRequest.id, token, controller.signal);
-            setTradesManResponses(messages);
-        })();
-        return () => {
-            controller.abort();
-        }
-    }, [selectedRequest]);
 
     const onClickUserSuggestion = (user: FindTradesMan) => {
         setDialogOpen(false);
@@ -115,14 +111,30 @@ export default function () {
         // })();
     }
 
-    const [updateButtonDisabled, setUpdateButtonDisabled] = useState(false);
-    const onUpdateRequest = (request: ClientJobRequest) => async () => {
-        setUpdateButtonDisabled(true);
-
-
-        setUpdateButtonDisabled(false);
+    const createOrUpdateRequest = async (request: ClientJobRequestWithoutId) => {
+        setDisableUpdateButton(true);
+        try {
+            if (request.id) {
+                // Just why, typescript?
+                await updateRequest({ ...request, id: request.id }, token);
+                setClientRequests([...clientRequests])
+                toast("Request updated successfully.");
+            } else {
+                const r = await createRequest(request, token);
+                setClientRequests([r, ...clientRequests])
+                toast("Request created successfully.");
+            }
+        } catch (error) {
+            if (error instanceof ApiError) {
+                toast.error(`${error.message}`);
+            } else {
+                toast.error("An unexpected error occurred.");
+            }
+            return;
+        } finally {
+            setDisableUpdateButton(false);
+        }
     }
-
     return (
         <div>
             <NavMenu />
@@ -152,118 +164,18 @@ export default function () {
 
                 {/* Message Panel */}
                 {selectedRequest && <div className="flex-1 flex flex-col">
-                    <RequestDetails initialRequestDetails={selectedRequest} onUpdateRequestDetails={r => { }} ></RequestDetails>
-                    <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-white to-blue-50">
+                    <RequestDetails initialRequestDetails={selectedRequest} disableUpdateButton={disableUpdateButton} onUpdateRequestDetails={r => createOrUpdateRequest(r)} /> </div>}
 
-                        <div className="space-y-4">
-                            <div>
-                                <Label>Requested On {selectedRequest.requestedOn}</Label>
-                            </div>
-
-                            <div>
-                                <Label>Start Date</Label>
-                                <Input
-                                    type="date"
-                                    value={selectedRequest.startDate || ""}
-                                    onChange={(e) => {
-                                        setSelectedRequest({ ...selectedRequest, startDate: e.target.value })
-                                    }}
-                                />
-                            </div>
-
-                            <div>
-                                <Label>Title</Label>
-                                <Input
-                                    value={selectedRequest.title}
-                                    onChange={(e) => setSelectedRequest({ ...selectedRequest, title: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <Label>Description</Label>
-                                <textarea
-                                    value={selectedRequest.description}
-                                    onChange={(e) => setSelectedRequest({ ...selectedRequest, description: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    checked={selectedRequest.showToEveryone}
-                                    onCheckedChange={(val) => {
-                                        if (val !== "indeterminate")
-                                            setSelectedRequest({ ...selectedRequest, showToEveryone: val })
-                                    }
-                                    }
-                                />
-                                <Label>Show to Everyone</Label>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    checked={selectedRequest.open}
-                                    onCheckedChange={(val) => {
-                                        if (val !== "indeterminate")
-                                            setSelectedRequest({ ...selectedRequest, open: val })
-                                    }}
-                                />
-                                <Label>Open</Label>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label>Images</Label>
-                                {selectedRequest.imagesUrl.map((url, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <Input
-                                            value={url}
-                                            onChange={(e) => handleImageChange(selectedRequest, index, e.target.value)}
-                                        />
-                                        <Button variant="destructive" onClick={() => removeImage(selectedRequest, index)}>
-                                            Remove
-                                        </Button>
-                                    </div>
-                                ))}
-                                <div className="p-4 border-t bg-white flex gap-2">
-                                    <Button onClick={onUpdateRequest(selectedRequest)} disabled={updateButtonDisabled}>Update request</Button>
-                                </div>
-                                {/*
-                                TODO: add this feature
-                                 <Button variant="outline" onClick={addImage}>
-                                    Add Image
-                                </Button> */}
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            {tradesManResponses ? "" : "Loading conversations..."}
-                            {tradesManResponses?.map((response) => (
-                                <div
-                                    key={response.id}
-                                    className="flex justify-start"
-                                    onClick={() => {
-                                        // TODO: navigate to the conversation with that user
-                                    }}
-                                >
-                                    <p>{response.tradesMan.name}</p>
-                                    {response.response &&
-                                        <div
-                                            className={"max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm bg-gray-400 rounded-bl-none"}
-                                        >
-                                            <h4>Proposed resolution</h4>
-                                            <p>Can be done by {response.response.AproximationEndDate}</p>
-                                            <p>The workmanship will be {response.response.workmanshipAmount}</p>
-                                        </div>
-                                    }
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                }
 
                 {/* New Conversation Dialog */}
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogContent>
-                        <RequestDetails onUpdateRequestDetails={r => { console.log(r) }}></RequestDetails>
+                        <RequestDetails disableUpdateButton={disableUpdateButton} onUpdateRequestDetails={r => {
+                            (async () => {
+                                await createOrUpdateRequest(r)
+                                setDialogOpen(false);
+                            })()
+                        }}></RequestDetails>
                     </DialogContent>
                 </Dialog>
             </div>

@@ -1,4 +1,4 @@
-import { clientGetRequestsConversations, ClientJobRequest, ClientJobRequestWithoutId, ClientJobResponsesConversation } from "@/api";
+import { ApiError, clientGetRequestsConversations, ClientJobRequest, ClientJobRequestWithoutId, ClientJobResponsesConversation } from "@/api";
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Label } from "reactstrap";
@@ -6,16 +6,21 @@ import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
 import useToken from "../useToken";
+import { toast } from "react-toastify";
 
 interface RequestDetailsProps {
     initialRequestDetails?: ClientJobRequest,
     onUpdateRequestDetails: (details: ClientJobRequestWithoutId) => void;
+    disableUpdateButton: boolean
 }
 
 export default function ({
     initialRequestDetails,
     onUpdateRequestDetails,
+    disableUpdateButton
 }: RequestDetailsProps) {
+    const { token } = useToken();
+
     const initialValue: ClientJobRequestWithoutId = {
         id: initialRequestDetails?.id,
         description: initialRequestDetails?.description || "",
@@ -27,16 +32,41 @@ export default function ({
         open: initialRequestDetails?.open || true,
         jobApprovedId: initialRequestDetails?.jobApprovedId,
     };
+
+    const onSendClientRequest = async (request_id: string,) => {
+
+    }
+    useEffect(() => {
+        const initialValue: ClientJobRequestWithoutId = {
+            id: initialRequestDetails?.id,
+            description: initialRequestDetails?.description || "",
+            title: initialRequestDetails?.title || "",
+            startDate: initialRequestDetails?.startDate || "",
+            imagesUrl: initialRequestDetails?.imagesUrl || [],
+            requestedOn: initialRequestDetails?.requestedOn || "",
+            showToEveryone: initialRequestDetails?.showToEveryone || false,
+            open: initialRequestDetails?.open || true,
+            jobApprovedId: initialRequestDetails?.jobApprovedId,
+        };
+        setSelectedRequest(initialValue);
+    }, [initialRequestDetails]);
     const [selectedRequest, setSelectedRequest] = useState(initialValue);
     const [tradesManResponses, setTradesManResponses] = useState<ClientJobResponsesConversation[] | null>(null);
-    const { token } = useToken();
     useEffect(() => {
         if (!initialRequestDetails) return;
         let controller = new AbortController();
         (async () => {
-            // TODO: fetch details page
-            const messages = await clientGetRequestsConversations(initialRequestDetails.id, token, controller.signal);
-            setTradesManResponses(messages);
+            try {
+                // TODO: fetch details page
+                const messages = await clientGetRequestsConversations(initialRequestDetails.id, token, controller.signal);
+                setTradesManResponses(messages);
+            } catch (error) {
+                if (error instanceof ApiError) {
+                    toast.error(`${error.message}`);
+                } else {
+                    console.error("Unexpected error:", error);
+                }
+            }
         })();
         return () => {
             controller.abort();
@@ -56,12 +86,11 @@ export default function ({
     //     const updatedImages = formData.imagesUrl.filter((_, i) => i !== index);
     //     handleChange("imagesUrl", updatedImages);
     // };
+    const [includeStartDate, setIncludeStartDate] = useState(initialRequestDetails?.startDate ? true : false);
 
     return (
-        <DialogContent className="max-w-xl">
-            <DialogHeader>
-                <DialogTitle>Edit Job Request</DialogTitle>
-            </DialogHeader>
+        <div className="max-w-xl">
+            <h2>Edit Job Request</h2>
 
             <div className="space-y-4">
                 {selectedRequest.requestedOn && <div>
@@ -69,14 +98,18 @@ export default function ({
                 </div>}
 
                 <div>
-                    <Label>Start Date</Label>
-                    <Input
+                    <Checkbox checked={includeStartDate} onCheckedChange={e => {
+                        if (e === "indeterminate") return;
+                        setIncludeStartDate(e);
+                    }}>Include Start Date</Checkbox>
+                    {includeStartDate && <Label>Start Date</Label>}
+                    {includeStartDate && <Input
                         type="date"
                         value={selectedRequest.startDate || ""}
                         onChange={(e) => {
                             setSelectedRequest({ ...selectedRequest, startDate: e.target.value })
                         }}
-                    />
+                    />}
                 </div>
 
                 <div>
@@ -137,8 +170,12 @@ export default function ({
                     </div> */}
                 <div className="text-right">
                     <Button onClick={() => {
-                        onUpdateRequestDetails(selectedRequest);
-                    }}>{initialRequestDetails ? "Update" : "Create"}</Button>
+                        const r = { ...selectedRequest };
+                        if (!includeStartDate) {
+                            r.startDate = undefined;
+                        }
+                        onUpdateRequestDetails(r);
+                    }} disabled={disableUpdateButton}>{initialRequestDetails ? "Update" : "Create"}</Button>
                 </div>
             </div>
 
@@ -166,6 +203,31 @@ export default function ({
                     </div>
                 ))}
             </div>
-        </DialogContent>
+        </div>
     );
 }
+
+
+// <div className="space-y-4">
+//     {tradesManResponses ? "" : "Loading conversations..."}
+//     {tradesManResponses?.map((response) => (
+//         <div
+//             key={response.id}
+//             className="flex justify-start"
+//             onClick={() => {
+//                 // TODO: navigate to the conversation with that user
+//             }}
+//         >
+//             <p>{response.tradesMan.name}</p>
+//             {response.response &&
+//                 <div
+//                     className={"max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm bg-gray-400 rounded-bl-none"}
+//                 >
+//                     <h4>Proposed resolution</h4>
+//                     <p>Can be done by {response.response.AproximationEndDate}</p>
+//                     <p>The workmanship will be {response.response.workmanshipAmount}</p>
+//                 </div>
+//             }
+//         </div>
+//     ))}
+// </div >

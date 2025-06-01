@@ -205,7 +205,25 @@ namespace Registry.Services
 
         public async Task<List<ConversationWithLastOfferDTO>> GetConversationsLastOffer(User user, Guid jobRequestDetails)
         {
-            throw new NotImplementedException();
+            //TODO: check that the job requests are to this user
+            var conversations = _context.Conversations
+                .Include(c => c.TradesMan)
+                .Include(c => c.Responses)
+                .Where(c => c.RequestId == jobRequestDetails)
+                .AsAsyncEnumerable();
+
+            var conversationsDTO = new List<ConversationWithLastOfferDTO>();
+            await foreach (var item in conversations)
+            {
+                var lastResponse = item.Responses.MaxBy(r => r.Sent);
+                new ConversationWithLastOfferDTO
+                {
+                    Id = item.Id,
+                    TradesMan = item.TradesMan.ToConversationUserDTO(),
+                    Response = lastResponse?.ToTradesManJobResponseDTO()
+                };
+            }
+            return conversationsDTO;
         }
     }
 }
