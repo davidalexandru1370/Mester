@@ -146,7 +146,10 @@ namespace Registry.Services
                 .Where(x => x.TradesManProfile != null)
                 .FirstAsync(x => x.Id == id);
 
-            if (r is null) return null;
+            if (r is null)
+            {
+                return null;
+            }
 
             return new TradesManInfoPageDTO
             {

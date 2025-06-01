@@ -39,6 +39,11 @@ namespace Registry.Repository
                 .WithOne().OnDelete(DeleteBehavior.Restrict)
                 .HasForeignKey<TradesMan>(x => x.Id);
 
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique()
+                .HasFilter("[Email] IS NOT NULL");
+
             modelBuilder.Entity<Speciality>().HasIndex(e => e.Type).IsUnique();
 
             modelBuilder.Entity<TradesManJobResponse>().Property(x => x.WorkmanshipAmount).HasPrecision(18, 2);
@@ -59,6 +64,8 @@ namespace Registry.Repository
 
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.JobApproved).WithOne();
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.InitiatedBy).WithMany().OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TradesMan>().HasMany(x => x.Images);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

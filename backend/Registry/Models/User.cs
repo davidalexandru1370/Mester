@@ -2,7 +2,6 @@
 
 namespace Registry.Models;
 
-[Index(nameof(Email), IsUnique = true)]
 public class User
 {
     public Guid Id { get; set; }

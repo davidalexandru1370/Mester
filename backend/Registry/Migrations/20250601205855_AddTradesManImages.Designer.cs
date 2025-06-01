@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Registry.Repository;
 
@@ -11,9 +12,11 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    partial class TradesManDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250601205855_AddTradesManImages")]
+    partial class AddTradesManImages
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -295,10 +298,6 @@ namespace Registry.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("HashPassword")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -319,10 +318,6 @@ namespace Registry.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasFilter("[Email] IS NOT NULL");
 
                     b.ToTable("Users");
                 });

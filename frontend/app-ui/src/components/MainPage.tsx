@@ -20,7 +20,7 @@ import {
 } from "@/domain/types/filters.ts";
 import ServiceTypeCard from "./internal/serviceTypeCard.tsx";
 import { TradesManDto } from "@/domain/types/tradesman/TradesManDto.ts";
-import { ToastContainer } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 function updateFiltersReducer(
   state: SearchTradesManFilters,
@@ -52,6 +52,7 @@ function updateFiltersReducer(
 export default function MainPage() {
   const [tradesmen, setTradesmen] = useState<any>([]);
   const [filters, updateFilters] = useReducer(updateFiltersReducer, {});
+  const navigator = useNavigate();
   const { counties } = useContext(DataStoreContext);
 
   useEffect(() => {
@@ -77,6 +78,10 @@ export default function MainPage() {
         console.log("Got them!");
         setTradesmen(response.data);
       });
+  }
+
+  function redirectToTradesman(id: string) {
+    navigator(`/tradesman/${id}`);
   }
 
   return (
@@ -123,11 +128,13 @@ export default function MainPage() {
               className="m-10 border border-gray-300 rounded-lg p-4"
               key={tradesman.id}
             >
-              <ServiceTypeCard
-                key={tradesman.id}
-                title={tradesman.name}
-                specialities={tradesman.specialities}
-              />
+              <div onClick={() => redirectToTradesman(tradesman.id)}>
+                <ServiceTypeCard
+                  key={tradesman.id}
+                  title={tradesman.name}
+                  specialities={tradesman.specialities}
+                />
+              </div>
             </div>
           );
         })}
