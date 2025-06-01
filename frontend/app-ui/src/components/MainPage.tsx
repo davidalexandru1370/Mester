@@ -20,7 +20,6 @@ import {
 } from "@/domain/types/filters.ts";
 import ServiceTypeCard from "./internal/serviceTypeCard.tsx";
 import { TradesManDto } from "@/domain/types/tradesman/TradesManDto.ts";
-import { ToastContainer } from "react-toastify";
 
 function updateFiltersReducer(
   state: SearchTradesManFilters,

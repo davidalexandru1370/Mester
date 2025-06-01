@@ -8,8 +8,10 @@ import Logout from "./components/Logout.tsx";
 import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
 import Conversations from "./components/message/Conversations.tsx";
 import Requests from "./components/message/Requests.tsx";
+import { useUser } from "./context/UserContext.tsx";
 
 function App() {
+  const { user } = useUser();
   return (
     <BrowserRouter>
       <Routes>

@@ -5,7 +5,7 @@
         public Guid Id { get; set; }
         public ClientJobRequest Request { get; set; } = default!;
         public required Guid RequestId { get; set; }
-        public User TradesMan { get; set; }
+        public User TradesMan { get; set; } = default!;
         public required Guid TradesManId { get; set; }
         public List<Message> Messages { get; set; } = new();
         public List<TradesManJobResponse> Responses { get; set; } = new();

@@ -1,22 +1,76 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
-import { Button, Card, CardBody, CardHeader, Input } from "reactstrap";
-import { ApiError, Conversation, findTradesMan, FindTradesMan, getConversations, getMessages, MessageOrResponse, sendMessage } from "@/api";
+import { Button, Card, CardBody, CardHeader, Input, Label } from "reactstrap";
+import { ApiError, ClientJobRequest, Conversation, findTradesMan, FindTradesMan, getConversation, getConversations, getGlobalRequests, getMessages, MessageOrResponse, sendMessage } from "@/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Switch } from "../ui/switch";
+import { useUser } from "@/context/UserContext";
 
-
+type ConversationOrGlobalRequest = { conversation: Conversation, globalRequest: undefined } | { globalRequest: ClientJobRequest, conversation: undefined };
 
 export default function () {
     const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [globalRequests, setGlobalRequests] = useState<ClientJobRequest[]>([]);
+    const [combinedConversations, setCombinedConversations] = useState<ConversationOrGlobalRequest[]>([]);
+    const [selectedConversation, setSelectedConversation] = useState<ConversationOrGlobalRequest | null>(null);
 
     const [messages, setMessages] = useState<MessageOrResponse[] | null>(null);
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [newUserName, setNewUserName] = useState("");
     const [usersSuggestions, setUsersSuggestions] = useState<FindTradesMan[] | null>([]);
+    const [includeGlobalRequests, setIncludeGlobalRequests] = useState(false);
+    const { token } = useToken();
+    const { user } = useUser();
+    const loadConversations = async (signal?: AbortSignal) => {
+        try {
+            const convs = await getConversations(token, signal);
+            setConversations(convs);
+        } catch (error) {
+            if (error instanceof ApiError) {
+                if (error.error.type !== "aborted") {
+                    console.log(error);
+                    toast.error(`${error.message}`);
+                }
+                return;
+            } else {
+                throw error;
+            }
+        }
+    }
+
+    const loadGlobalRequests = async (signal?: AbortSignal) => {
+        try {
+            const requests = await getGlobalRequests(token, signal);
+            setGlobalRequests(requests);
+        } catch (error) {
+            if (error instanceof ApiError) {
+                if (error.error.type !== "aborted") {
+                    toast(error.message)
+                }
+            }
+        }
+    }
+
+    useEffect(() => {
+        let controller = new AbortController();
+        loadConversations(controller.signal);
+
+        return () => {
+            controller.abort();
+        };
+    }, []);
+
+    useEffect(() => {
+        const combined = [...conversations.map(c => ({ conversation: c, globalRequest: undefined })),
+        ...globalRequests.map(req => ({ globalRequest: req, conversation: undefined }))];
+        setCombinedConversations(combined.map(item => ({ ...item })));
+    }, [conversations, globalRequests]);
+
+
 
     useEffect(() => {
         if (!dialogOpen) {
@@ -50,38 +104,38 @@ export default function () {
         };
     }, [dialogOpen, newUserName]);
 
-    const { token } = useToken();
     useEffect(() => {
         let controller = new AbortController();
-        (async () => {
-            try {
-                const conversations = await getConversations(token, controller.signal);
-                setConversations(conversations);
-                console.log(conversations);
-            } catch (error) {
-                if (error instanceof ApiError) {
-                    if (error.error.type !== "aborted") {
-                        toast(error.message)
-                    }
-                }
-            }
-        })();
+        if (!includeGlobalRequests) {
+            setGlobalRequests([]);
+            return;
+        }
+        loadGlobalRequests(controller.signal);
 
         return () => {
             controller.abort();
         }
-    }, []);
+    }, [includeGlobalRequests]);
 
-    const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+    useEffect(() => {
+        if (!selectedConversation) return;
+        if (selectedConversation.globalRequest && !includeGlobalRequests) {
+            setSelectedConversation(null);
+        }
+    }, [selectedConversation, includeGlobalRequests])
 
     useEffect(() => {
         setMessages(null);
         if (!selectedConversation) {
             return;
         }
+        if (!selectedConversation.conversation) {
+            setMessages([]);
+            return;
+        }
         let controller = new AbortController();
         (async () => {
-            const messages = await getMessages(selectedConversation.id, token, controller.signal);
+            const messages = await getMessages(selectedConversation.conversation.id, token, controller.signal);
             setMessages(messages);
         })();
         return () => {
@@ -95,16 +149,32 @@ export default function () {
         if (!message.trim() || !selectedConversation) return;
         (async () => {
             try {
+                let conversation;
+                if (selectedConversation.globalRequest) {
+                    const conversationResult = await getConversation(selectedConversation.globalRequest.id, token);
+                    loadConversations();
+                    loadGlobalRequests();
+                    conversation = conversationResult;
+                    console.log("Am create conversatia");
+                    console.log(conversation);
+                } else {
+                    conversation = selectedConversation.conversation;
+                }
                 const r = await sendMessage({
-                    conversationId: selectedConversation.id,
+                    conversationId: conversation.id,
                     text: message
                 }, token);
+                console.log(r);
+
                 const messageResponse: MessageOrResponse = {
                     isMe: true,
-                    type: "message",
-                    id: r.id,
-                    from: r.from,
-                    text: r.text
+                    sent: r.sent,
+                    message: {
+                        from: r.from,
+                        text: r.text,
+                        id: r.id,
+                    },
+                    response: undefined,
                 };
                 setMessages((prev) => {
                     if (!prev) return [messageResponse];
@@ -114,6 +184,7 @@ export default function () {
             } catch (error) {
                 if (error instanceof ApiError) {
                     if (error.error.type !== "aborted") {
+                        console.log(error.error);
                         toast.error(`${error.message}`);
                     }
                     return;
@@ -139,27 +210,42 @@ export default function () {
         //     }
         // })();
     }
+
+
     return (
         <div>
             <NavMenu />
             <ToastContainer />
             <div className="flex h-screen bg-gray-100">
+
                 {/* Conversations List */}
                 <div className="w-1/3 border-r bg-white p-4 overflow-y-auto">
-                    {conversations.map((conv) => (
+                    {user?.isTradesman && <div className="flex justify-left mb-4 center">
+                        <Switch checked={includeGlobalRequests} onCheckedChange={setIncludeGlobalRequests}></Switch>
+                        <Label>Include global requests</Label>
+                    </div>}
+                    {combinedConversations.map((conv) => (
                         <Card
-                            key={conv.id}
-                            className={`mb-2 cursor-pointer hover:bg-gray-100 transition duration-300 ${selectedConversation?.id === conv.id ? "bg-gray-200" : ""
+                            key={conv.conversation?.id || conv.globalRequest?.id}
+                            className={`mb-2 cursor-pointer hover:bg-gray-100 transition duration-300 bg-gray-200
                                 }`}
                             onClick={() => setSelectedConversation(conv)}
                         >
-                            <CardHeader>{conv.clientRequest.title}</CardHeader>
-                            <CardBody className="p-4">
-                                <p className="font-semibold">{conv.tradesMan.name}</p>
-                                {conv.lastMessage && <p className="text-sm text-gray-600">
-                                    {conv.lastMessage.isMe ? "You: " : ""} {conv.lastMessage.type === "message" ? conv.lastMessage.text : `${conv.lastMessage.workmanshipAmount} by ${conv.lastMessage.AproximationEndDate}`}
-                                </p>}
-                            </CardBody>
+                            {conv.conversation && <div>
+                                <CardHeader>{conv.conversation.clientRequest.title}</CardHeader>
+                                <CardBody className="p-4">
+                                    <p className="font-semibold">{conv.conversation.tradesMan.name}</p>
+                                    {conv.conversation.lastMessage && <p className="text-sm text-gray-600">
+                                        {conv.conversation.lastMessage.isMe ? "You: " : ""} {conv.conversation.lastMessage.message ? conv.conversation.lastMessage.message.text : `${conv.conversation.lastMessage.response.workmanshipAmount} by ${conv.conversation.lastMessage.response.AproximationEndDate}`}
+                                    </p>}
+                                </CardBody>
+                            </div>}
+                            {conv.globalRequest && <div>
+                                <CardHeader>{conv.globalRequest.title}</CardHeader>
+                                <CardBody className="p-4">
+                                    Global
+                                </CardBody>
+                            </div>}
                         </Card>
                     ))}
                 </div>
@@ -171,18 +257,18 @@ export default function () {
                             {messages ? "" : "Loading messages..."}
                             {messages?.map((msg) => (
                                 <div
-                                    key={msg.id}
+                                    key={msg.message ? msg.message.id : msg.response.id}
                                     className={`flex ${msg.isMe ? "justify-end" : "justify-start"
                                         }`}
                                 >
-                                    {msg.type === "message" ?
+                                    {msg.message ?
                                         <div
                                             className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${msg.isMe
                                                 ? "bg-blue-500 rounded-br-none"
                                                 : "bg-gray-400 rounded-bl-none"
                                                 }`}
                                         >
-                                            {msg.text}
+                                            {msg.message.text}
                                         </div> :
                                         <div
                                             className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${msg.isMe
@@ -191,8 +277,8 @@ export default function () {
                                                 }`}
                                         >
                                             <h4>Proposed resolution</h4>
-                                            <p>Can be done by {msg.AproximationEndDate}</p>
-                                            <p>The workmanship will be {msg.workmanshipAmount}</p>
+                                            <p>Can be done by {msg.response.AproximationEndDate}</p>
+                                            <p>The workmanship will be {msg.response.workmanshipAmount}</p>
                                             <Button
                                                 className="mt-2"
                                                 onClick={() => {
@@ -247,6 +333,6 @@ export default function () {
                     </DialogContent>
                 </Dialog>
             </div>
-        </div>
+        </div >
     );
 }

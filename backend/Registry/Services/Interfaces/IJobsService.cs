@@ -22,5 +22,6 @@ namespace Registry.Services.Interfaces
         Task<ConversationDTO> SendClientRequestToTradesMan(User client, Guid clientRequestId, Guid tradesManId);
         Task<SendMessageResponse> SendMessage(User user, Guid conversationId, SendMessageRequest sendMessage);
         Task UpdateClientRequest(User user, Guid clientRequestId, UpdateClientJobRequest request);
+        Task<List<ClientJobRequestDTO>> GetGlobalRequests(User tradesMan);
     }
 }

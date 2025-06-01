@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Registry.DTO.Requests;
+using Registry.DTO.Responses;
+using Registry.Errors.Services;
 using Registry.Services.Interfaces;
 
 namespace Registry.Controllers
@@ -63,6 +65,16 @@ namespace Registry.Controllers
             var user = await _userService.GetByClaims(User);
             var r = await _serviceJobs.SendClientRequestToTradesMan(user, clientRequestId, tradesManId);
             return Ok(r);
+        }
+
+        [Authorize]
+        [HttpGet("global")]
+        public async Task<IActionResult> GetGlobalRequest()
+        {
+            var user = await _userService.GetByClaims(User);
+            if (user.TradesManProfile is null) throw new UnauthorizedException();
+            List<ClientJobRequestDTO> requests = await _serviceJobs.GetGlobalRequests(user);
+            return Ok(requests);
         }
     }
 }
