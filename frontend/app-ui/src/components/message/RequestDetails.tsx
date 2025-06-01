@@ -6,6 +6,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Button } from "../ui/button";
 import useToken from "../useToken";
 import { toast } from "react-toastify";
+import { cn } from "@/lib/utils";
 
 interface RequestDetailsProps {
     initialRequestDetails?: ClientJobRequest,
@@ -86,14 +87,15 @@ export default function ({
     const [includeStartDate, setIncludeStartDate] = useState(initialRequestDetails?.startDate ? true : false);
 
     return (
-        <div className="max-w-xl">
+        <div className="justify-center mt-6">
+            <div className={cn("gap-4")}>
             <h2>Edit Job Request</h2>
-
             <div className="space-y-4">
                 {selectedRequest.requestedOn && <div>
                     <Label>Requested On {selectedRequest.requestedOn}</Label>
                 </div>}
 
+                {/*
                 <div>
                     <Checkbox checked={includeStartDate} onCheckedChange={e => {
                         if (e === "indeterminate") return;
@@ -107,9 +109,9 @@ export default function ({
                             setSelectedRequest({ ...selectedRequest, startDate: e.target.value })
                         }}
                     />}
-                </div>
+                </div>*/}
 
-                <div>
+                <div className="mx-25">
                     <Label>Title</Label>
                     <Input
                         value={selectedRequest.title}
@@ -117,15 +119,15 @@ export default function ({
                     />
                 </div>
 
-                <div>
+                <div className="mx-25">
                     <Label>Description</Label>
-                    <textarea
+                    <textarea className="flex justify-center items-center h-30 min-w-0 w-full border"
                         value={selectedRequest.description}
                         onChange={(e) => setSelectedRequest({ ...selectedRequest, description: e.target.value })}
                     />
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div>
                     <Checkbox
                         checked={selectedRequest.showToEveryone}
                         onCheckedChange={(val) => {
@@ -134,10 +136,10 @@ export default function ({
                         }
                         }
                     />
-                    <Label>Show to Everyone</Label>
+                    <Label className="ml-1">Show to Everyone</Label>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div>
                     <Checkbox
                         checked={selectedRequest.open}
                         onCheckedChange={(val) => {
@@ -145,7 +147,7 @@ export default function ({
                                 setSelectedRequest({ ...selectedRequest, open: val })
                         }}
                     />
-                    <Label>Open</Label>
+                    <Label className="ml-1">Open</Label>
                 </div>
 
                 {/* <div className="space-y-2">
@@ -165,7 +167,7 @@ export default function ({
                             Add Image
                         </Button>
                     </div> */}
-                <div className="text-right">
+                <div>
                     <Button onClick={() => {
                         const r = { ...selectedRequest };
                         if (!includeStartDate) {
@@ -199,6 +201,7 @@ export default function ({
                         }
                     </div>
                 ))}
+            </div>
             </div>
         </div>
     );
