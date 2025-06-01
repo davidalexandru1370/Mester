@@ -42,10 +42,10 @@ namespace Registry.Repository
             }
         }
 
-        public async Task<User?> FindByUsername(string email)
+        public async Task<User?> FindByEmail(string email)
         {
             var user = await _context.Users
-                .Where(x => x.Name == email)
+                .Where(x => x.Email == email)
                 .Include(x => x.TradesManProfile)
                 .FirstOrDefaultAsync();
             return user;
@@ -53,10 +53,17 @@ namespace Registry.Repository
 
         public async Task<User> GetUserById(Guid userId)
         {
-            return await _context.Users
+            var user = await _context.Users
                 .Where(u => u.Id == userId)
                 .Include(u => u.TradesManProfile)
-                .FirstOrDefaultAsync() ?? throw new NotFoundException();
+                .FirstOrDefaultAsync();
+
+            if (user is null)
+            {
+                throw new NotFoundException();
+            }
+
+            return user;
         }
 
         public async Task UpdateUserImage(Guid userId, string imageUrl)

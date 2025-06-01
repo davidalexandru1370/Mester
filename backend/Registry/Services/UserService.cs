@@ -36,7 +36,7 @@ public class UserService : IUserService
     public async Task<User> GetByClaims(ClaimsPrincipal claims)
     {
         var email = claims.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value ?? throw new UnauthorizedException();
-        var user = await _repoUsers.FindByUsername(email) ?? throw new UnauthorizedException();
+        var user = await _repoUsers.FindByEmail(email) ?? throw new UnauthorizedException();
         return user;
     }
 
@@ -130,7 +130,7 @@ public class UserService : IUserService
     /// <returns></returns>
     public async Task<User?> LoginUser(string email, string password)
     {
-        var user = await _repoUsers.FindByUsername(email);
+        var user = await _repoUsers.FindByEmail(email);
         if (user is null)
         {
             return null;
