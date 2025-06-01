@@ -10,8 +10,9 @@ import Col from 'react-bootstrap/Col';
 
 export default function () {
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [userDetails, setUserDetails] = useState<UserDetailsDto | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [userDetails, setUserDetails] = useState<UserDetailsDto | null>(null);
+    const [tradesmanShower, setTradesmanShower] = useState(false);
     const { token, setToken } = useToken();
     const [specialities, setSpecialities] = useState<any>([]);
     const [addedSpecialities, setAddedSpecialities] = useState<any>([]);
@@ -21,6 +22,7 @@ export default function () {
     const [description, setDescription] = useState("");
     const [city, setCity] = useState("");
     const [county, setCounty] = useState("");
+
 
     const isNumeric = (string: string) => Number.isFinite(+string)
 
@@ -204,6 +206,17 @@ export default function () {
                   </button>
                 </div>
                 </Col>
+          {tradesmanShower === false ? (
+              <Col>
+                <h4>Do you want to become a tradesman?</h4>
+                <br></br>
+                <h5>Unlock the ability to show off your skills to potential customers and get paid for your work!</h5>
+                <br></br>
+                <button className="btn btn-warning" onClick={() => {setTradesmanShower(true)}}>
+                START OFF TODAY BY COMPLETING THIS FORM
+                </button>
+              </Col>
+            ) : (
           <Col xs={5}>
           <form className="Auth-form">
           <div className="Auth-form-content">
@@ -246,6 +259,10 @@ export default function () {
           </div>
           </form>
           </Col>
+          )}
+          {tradesmanShower === false ? (
+              <></>
+            ) : (
           <Col xs={5}>
           <h4 className="Auth-form-title">Specialities that can be added</h4>
           <Container>
@@ -288,8 +305,11 @@ export default function () {
                     );
                 })}
             </table>
-          </Col>
+          </Col>)}
           </Row>
+          {tradesmanShower === false ? (
+              <></>
+            ) : (
           <Row>
           <div className="d-grid gap-2 mt-3">
               <div className="form-group mt-3">
@@ -328,7 +348,7 @@ export default function () {
             </button>
           </div>
               </div>
-              </Row>
+              </Row>)}
               </Container>
             )}
           </div>
