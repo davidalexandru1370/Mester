@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
@@ -46,6 +46,7 @@ export default function () {
             } catch (error) {
                 if (error instanceof ApiError) {
                     if (error.error.type !== "aborted") {
+                        console.log(error);
                         toast.error(`${error.message}`);
                     }
                     return;
@@ -72,6 +73,7 @@ export default function () {
             catch (error) {
                 if (error instanceof ApiError) {
                     if (error.error.type !== "aborted") {
+                        console.log(error);
                         toast.error(`${error.message}`);
                     }
                     return;
@@ -108,17 +110,26 @@ export default function () {
             if (request.id) {
                 // Just why, typescript?
                 await updateRequest({ ...request, id: request.id }, token);
-                setClientRequests([...clientRequests])
-                toast("Request updated successfully.");
+                let response = clientRequests.map(r => {
+                    if (r.id === request.id) {
+                        return { ...request, id: request.id };
+                    } else {
+                        return r
+                    }
+                });
+                setClientRequests(response);
+                toast.success("Request updated successfully.");
             } else {
                 const r = await createRequest(request, token);
                 setClientRequests([r, ...clientRequests])
-                toast("Request created successfully.");
+                toast.success("Request created successfully.");
             }
         } catch (error) {
             if (error instanceof ApiError) {
+                console.log(error);
                 toast.error(`${error.message}`);
             } else {
+                console.log("Unexpected error:", error);
                 toast.error("An unexpected error occurred.");
             }
             return;
@@ -129,6 +140,7 @@ export default function () {
     return (
         <div>
             <NavMenu />
+            <ToastContainer />
             <div className="flex h-screen bg-gray-100">
                 {/* Conversations List */}
                 <div className="w-1/3 border-r bg-white p-4 overflow-y-auto">

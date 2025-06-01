@@ -94,7 +94,7 @@ namespace Registry.Services
             return c.ToConversationDTO(tradesMan.Id);
         }
 
-        public async Task<Guid> CreateClientRequest(User user, CreateClientJobRequest request)
+        public async Task<ClientJobRequestDTO> CreateClientRequest(User user, CreateClientJobRequest request)
         {
             var jobRequest = new ClientJobRequest
             {
@@ -106,7 +106,7 @@ namespace Registry.Services
             };
             await _context.ClientRequests.AddAsync(jobRequest);
             await _context.SaveChangesAsync();
-            return jobRequest.Id;
+            return jobRequest.ToClientJobRequestDTO();
         }
 
         public async Task<ConversationDTO> SendClientRequestToTradesMan(User client, Guid clientRequestId, Guid tradesManId)
