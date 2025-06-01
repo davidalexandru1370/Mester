@@ -144,7 +144,7 @@ export default function () {
             <div className="flex h-screen bg-gray-100">
                 {/* Conversations List */}
                 <div className="w-1/3 border-r bg-white p-4 overflow-y-auto">
-                    <Button size="icon" variant="outline" onClick={() => setDialogOpen(true)}>
+                    <Button size="icon" variant="outline" onClick={() => setDialogOpen(true)} style={{marginBottom: 10,}}>
                         <Plus className="w-5 h-5" />
                     </Button>
                     {clientRequests.map((request) => (
