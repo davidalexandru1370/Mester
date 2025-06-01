@@ -45,6 +45,8 @@ namespace Registry.Repository
 
             modelBuilder.Entity<Conversation>().HasOne(x => x.Request).WithMany().OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Conversation>().HasOne(x => x.TradesMan).WithMany().OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Conversation>().HasIndex(c => new { c.RequestId, c.TradesManId }).IsUnique();
+
             modelBuilder.Entity<TradesManSpecialities>()
                 .HasKey(e => new { e.TradesManId, e.SpecialityId });
 
@@ -59,6 +61,8 @@ namespace Registry.Repository
 
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.JobApproved).WithOne();
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.InitiatedBy).WithMany().OnDelete(DeleteBehavior.Restrict);
+
+
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

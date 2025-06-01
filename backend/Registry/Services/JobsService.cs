@@ -22,20 +22,23 @@ namespace Registry.Services
 
         public async Task<List<ConversationDTO>> GetConversations(User user)
         {
-            var r = _context.Conversations
+            var r = await _context.Conversations
                 .Include(c => c.Request)
                 .Include(c => c.TradesMan)
                 .Include(c => c.Messages)
                 .Where(c => c.Request.InitiatedById == user.Id || c.TradesMan.Id == user.Id)
-                .AsAsyncEnumerable();
-            List<ConversationDTO> conversations = [];
-            await foreach (var c in r)
+                .Select(c => c.ToConversationDTO(user.Id))
+                .ToListAsync();
+
+            r.Sort((a, b) =>
             {
-                var dto = c.ToConversationDTO(user.Id);
-                if (dto.LastMessage is null) continue;
-                conversations.Add(dto);
-            }
-            return conversations;
+                if (a.LastMessage is null && b.LastMessage is null) return 0;
+                if (a.LastMessage is null) return -1;
+                if (b.LastMessage is null) return 1;
+                return -a.LastMessage.Sent.CompareTo(b.LastMessage.Sent);
+            });
+
+            return r;
         }
 
         public async Task<List<MessageOrResponsesDTO>?> GetMessages(User user, Guid conversationId)
@@ -57,7 +60,7 @@ namespace Registry.Services
 
         public async Task<SendMessageResponse> SendMessage(User user, Guid conversationId, SendMessageRequest sendMessage)
         {
-            var conversation = await _context.Conversations.FindAsync(conversationId) ?? throw new ServiceException("Conversation was not found");
+            var conversation = await _context.Conversations.FirstOrDefaultAsync(c => c.Id == conversationId) ?? throw new ServiceException("Conversation was not found");
             var message = new Message
             {
                 FromId = user.Id,
@@ -76,6 +79,7 @@ namespace Registry.Services
             var conversation = await _context.Conversations
                 .Include(c => c.Messages)
                 .Include(c => c.Responses)
+                .Include(c => c.Request)
                 .FirstOrDefaultAsync(c => c.Request.Id == clientJobRequestId && c.TradesMan.Id == tradesMan.Id);
 
             if (conversation is not null)
@@ -87,11 +91,12 @@ namespace Registry.Services
             {
                 RequestId = request.Id,
                 TradesManId = tradesMan.Id,
-                TradesMan = tradesMan
+                TradesMan = tradesMan,
+                Request = request
             };
-            await _context.Conversations.AddAsync(c);
+            var r = await _context.Conversations.AddAsync(c);
             await _context.SaveChangesAsync();
-            return c.ToConversationDTO(tradesMan.Id);
+            return r.Entity.ToConversationDTO(tradesMan.Id);
         }
 
         public async Task<ClientJobRequestDTO> CreateClientRequest(User user, CreateClientJobRequest request)
@@ -224,6 +229,17 @@ namespace Registry.Services
                 };
             }
             return conversationsDTO;
+        }
+
+        public async Task<List<ClientJobRequestDTO>> GetGlobalRequests(User tradesMan)
+        {
+            var exceptListIds = await _context.Conversations.Where(c => c.TradesManId == tradesMan.Id).Select(r => r.RequestId).ToListAsync();
+            return await _context.ClientRequests
+                .Where(r => r.JobApprovedId == null && r.ShowToEveryone)
+                .OrderBy(r => r.RequestedOn)
+                .Where(r => !exceptListIds.Contains(r.Id))
+                .Select(v => v.ToClientJobRequestDTO())
+                .ToListAsync();
         }
     }
 }
