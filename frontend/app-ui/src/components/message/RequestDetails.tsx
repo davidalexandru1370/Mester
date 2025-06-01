@@ -1,6 +1,5 @@
 import { ApiError, clientGetRequestsConversations, ClientJobRequest, ClientJobRequestWithoutId, ClientJobResponsesConversation } from "@/api";
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Label } from "reactstrap";
 import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
@@ -33,9 +32,7 @@ export default function ({
         jobApprovedId: initialRequestDetails?.jobApprovedId,
     };
 
-    const onSendClientRequest = async (request_id: string,) => {
 
-    }
     useEffect(() => {
         const initialValue: ClientJobRequestWithoutId = {
             id: initialRequestDetails?.id,

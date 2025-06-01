@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
-import { Button, Card, CardBody, CardHeader, Input, Label } from "reactstrap";
-import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestWithoutId, ClientJobResponsesConversation, Conversation, createRequest, findTradesMan, FindTradesMan, getConversation, getConversations, getMessages, Message, MessageOrResponse, sendMessage, updateRequest } from "@/api";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Button, Card, CardBody, CardHeader, } from "reactstrap";
+import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestWithoutId, createRequest, findTradesMan, FindTradesMan, updateRequest } from "@/api";
+import { Dialog, DialogContent, } from "../ui/dialog";
 import { Plus } from "lucide-react";
-import { Checkbox } from "../ui/checkbox";
 import RequestDetails from "./RequestDetails";
-import { request } from "http";
 
 
 export default function () {
     const [clientRequests, setClientRequests] = useState<ClientJobRequest[]>([]);
 
-    const [tradesManResponses, setTradesManResponses] = useState<ClientJobResponsesConversation[] | null>(null);
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [newUserName, setNewUserName] = useState("");
@@ -32,11 +28,6 @@ export default function () {
     // const addImage = () => {
     //     handleChange("imagesUrl", [...formData.imagesUrl, ""]);
     // };
-
-    const removeImage = (request: ClientJobRequest, index: number) => {
-        const updatedImages = request.imagesUrl.filter((_, i) => i !== index);
-        setSelectedRequest({ ...request, imagesUrl: updatedImages });
-    };
 
     useEffect(() => {
         if (!dialogOpen) {

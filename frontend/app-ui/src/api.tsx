@@ -281,7 +281,6 @@ export async function sendClientRequestToConversation(clientRequest: string, tra
                     signal
                 },
             );
-
     }
     catch (e) {
         throw new ApiError(convertError(e))

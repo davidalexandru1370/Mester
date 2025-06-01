@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, Input } from "reactstrap";
-import { ApiError, Conversation, findTradesMan, FindTradesMan, getConversation, getConversations, getMessages, Message, MessageOrResponse, sendMessage } from "@/api";
+import { ApiError, Conversation, findTradesMan, FindTradesMan, getConversations, getMessages, MessageOrResponse, sendMessage } from "@/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Plus } from "lucide-react";
 
 
 
