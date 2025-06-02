@@ -126,6 +126,7 @@ export interface ConversationUser {
 
 export interface Message {
     id: string;
+    isMe: boolean;
     from: ConversationUser;
     text: string
 }
@@ -152,17 +153,38 @@ export interface ClientJobRequest {
     open: boolean;
     imagesUrl: string[];
     jobApprovedId?: string;
+    tradesManResponseApproveId?: string;
     client: ConversationUser
 }
 
-export type MessageOrResponse = { isMe: boolean, sent: string, seen?: string } & ({ message: Message, response: undefined } | { response: TradesManJobResponse, message: undefined });
+export interface BillCreateRequest {
+
+}
+
+export interface Bill {
+    id: string;
+    jobId: string;
+    description: string;
+    billImage: string;
+    amount: number;
+    paid: boolean;
+}
+
+export interface CreateBill {
+    jobId: string;
+    description: string;
+    billImageBase64: string;
+    amount: number;
+}
+
+export type MessageOrResponseOrBill = { sent: string, seen?: string } & ({ message: Message, response: undefined, bill: undefined } | { response: TradesManJobResponse, message: undefined, bill: undefined } | { bill: Bill, message: undefined, response: undefined });
 
 
 export interface Conversation {
     id: string;
     clientRequest: ClientJobRequest;
     tradesMan: ConversationUser;
-    lastMessage?: MessageOrResponse;
+    lastMessage?: MessageOrResponseOrBill;
 }
 
 export async function getConversations(token: string, signal?: AbortSignal): Promise<Conversation[]> {
@@ -205,7 +227,7 @@ export async function getGlobalRequests(token: string, signal?: AbortSignal): Pr
     }
 }
 
-export async function getMessages(conversationId: string, token: string, signal?: AbortSignal): Promise<MessageOrResponse[]> {
+export async function getMessages(conversationId: string, token: string, signal?: AbortSignal): Promise<MessageOrResponseOrBill[]> {
     try {
         const response = await axios
             .get(
@@ -219,7 +241,7 @@ export async function getMessages(conversationId: string, token: string, signal?
                 },
             );
         console.log(response.data);
-        return response.data as MessageOrResponse[];
+        return response.data as MessageOrResponseOrBill[];
     }
     catch (e) {
         throw new ApiError(convertError(e))
@@ -379,7 +401,7 @@ export async function clientGetRequestsConversations(requestId: string, token: s
     }
 }
 
-interface TradesManJobResponse {
+export interface TradesManJobResponse {
     id: string;
     sent: string;
     seen?: string;
@@ -468,6 +490,48 @@ export async function createTradesManJobResponse(params: {
 
 
 export async function acceptTradesManJobResponse(responseId: string, token: string, signal?: AbortSignal): Promise<undefined> {
+    try {
+        await axios
+            .patch(
+                `${BASE_URL}/api/Response/${responseId}/accept`,
+                undefined,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}
+
+
+export async function sendBillRequest(responseId: string, token: string, signal?: AbortSignal): Promise<undefined> {
+    try {
+        await axios
+            .patch(
+                `${BASE_URL}/api/Response/${responseId}/accept`,
+                undefined,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}
+
+
+export async function markAsPaiedBillRequest(responseId: string, token: string, signal?: AbortSignal): Promise<undefined> {
     try {
         await axios
             .patch(

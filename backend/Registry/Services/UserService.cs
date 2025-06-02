@@ -172,7 +172,7 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<UserImageDTO> UploadUserImage(IFormFile image, Guid userId)
+    public async Task<UserImageDTO> UploadUserImage(Stream image, Guid userId)
     {
         var imageUploadUrl = await _imageService.UploadImage(image);
 

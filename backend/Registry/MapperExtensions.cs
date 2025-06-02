@@ -12,12 +12,19 @@ namespace Registry
         public static ConversationDTO ToConversationDTO(this Conversation conversation, Guid currentUser)
         {
             var lastMessage = conversation.Messages.MaxBy(m => m.Sent)?.ToMessageAndResponseDTO(currentUser);
-            var lastResponse = conversation.Responses.MaxBy(m => m.Sent)?.ToMessageAndResponseDTO(currentUser);
+            var lastResponse = conversation.Responses.MaxBy(m => m.Sent)?.ToMessageAndResponseDTO();
+            var lastBill = conversation.Request.JobApproved?.Bills.MaxBy(b => b.Sent)?.ToMessageAndResponseDTO();
 
             var last = lastMessage;
-            if (lastMessage is not null && lastResponse is not null && lastResponse.Sent > lastMessage.Sent)
+            if (last is null) last = lastResponse;
+            else if (lastResponse is not null && lastResponse.Sent > last.Sent)
             {
                 last = lastResponse;
+            }
+            if (last is null) last = lastBill;
+            else if (lastBill is not null && lastBill.Sent > last.Sent)
+            {
+                last = lastBill;
             }
             return new ConversationDTO
             {
@@ -38,27 +45,38 @@ namespace Registry
             };
         }
 
-        public static MessageOrResponsesDTO ToMessageAndResponseDTO(this Message message, Guid currentUser)
+        public static MessageOrResponsesOrBillDTO ToMessageAndResponseDTO(this Message message, Guid currentUser)
         {
-            return new MessageOrResponsesDTO
+            return new MessageOrResponsesOrBillDTO
             {
-                IsMe = message.FromId == currentUser,
-                Message = message.ToMessageDTO(),
+                Message = message.ToMessageDTO(currentUser),
                 Seen = message.Seen,
                 Sent = message.Sent,
             };
         }
 
-        public static MessageOrResponsesDTO ToMessageAndResponseDTO(this TradesManJobResponse response, Guid currentUser)
+        public static MessageOrResponsesOrBillDTO ToMessageAndResponseDTO(this TradesManJobResponse response)
         {
-            return new MessageOrResponsesDTO
+            return new MessageOrResponsesOrBillDTO
             {
-                IsMe = response.Conversation.TradesManId == currentUser,
                 Response = response.ToTradesManJobResponseDTO(),
                 Seen = response.Seen,
                 Sent = response.Sent,
             };
         }
+
+        public static MessageOrResponsesOrBillDTO ToMessageAndResponseDTO(this Bill response)
+        {
+            return new MessageOrResponsesOrBillDTO
+            {
+                Bill = response.ToBillDTO(),
+                Seen = response.Seen,
+                Sent = response.Sent,
+            };
+        }
+
+        [MapperRequiredMapping(RequiredMappingStrategy.Target)]
+        public static partial BillDTO ToBillDTO(this Bill bill);
 
         public static ClientJobRequestDTO ToClientJobRequestDTO(this ClientJobRequest request)
         {
@@ -74,12 +92,20 @@ namespace Registry
                 // TODO: add support for images
                 ImagesUrl = new(),
                 StartDate = request.StartDate,
-                Client = request.InitiatedBy.ToConversationUserDTO()
+                Client = request.InitiatedBy.ToConversationUserDTO(),
+                TradesManResponseApproveId = request.JobApproved?.TradesManJobResponseId
             };
         }
 
-        [MapperRequiredMapping(RequiredMappingStrategy.Target)]
-        public static partial MessageResponse ToMessageDTO(this Message message);
+        public static MessageResponse ToMessageDTO(this Message message, Guid currentUserId)
+        {
+            return new MessageResponse
+            {
+                Id = message.Id,
+                Text = message.Text,
+                IsMe = message.FromId == currentUserId
+            };
+        }
 
         [MapperRequiredMapping(RequiredMappingStrategy.Target)]
         public static partial TradesManJobResponseDTO ToTradesManJobResponseDTO(this TradesManJobResponse response);

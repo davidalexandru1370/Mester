@@ -126,7 +126,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserImageDTO>> UploadUserImage([FromForm] UpdateUserImageRequest request)
     {
         var userId = User.GetUserId();
-        var uploadImage = await _authenticationService.UploadUserImage(request.Image, userId);
+        var uploadImage = await _authenticationService.UploadUserImage(request.Image.OpenReadStream(), userId);
         return Ok(uploadImage);
     }
 }

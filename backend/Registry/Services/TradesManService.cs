@@ -202,7 +202,7 @@ namespace Registry.Services
 
             foreach (var image in images)
             {
-                var imageUrl = await _imageService.UploadImage(image);
+                var imageUrl = await _imageService.UploadImage(image.OpenReadStream());
                 tradesmanImages.Add(new TradesManImages
                 {
                     ImageUrl = imageUrl,

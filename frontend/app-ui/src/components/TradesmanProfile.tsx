@@ -16,6 +16,7 @@ import {
 } from "reactstrap";
 import { RequestDto } from "@/domain/types/requestDto";
 import useToken from "./useToken";
+import { toast } from "react-toastify";
 
 interface Speciality {
   specialityId: string;
@@ -109,7 +110,7 @@ const TradesmanProfile: FC = () => {
       })
       .catch((err) => {
         console.error("Eroare la trimiterea cererii:", err);
-        setError("Eroare la trimiterea cererii.");
+        toast.error("Eroare la trimiterea cererii.");
       });
   }
 

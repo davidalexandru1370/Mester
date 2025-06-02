@@ -13,5 +13,5 @@ public interface IUserService
     Task<User> CreateUser(string username, string password, string phoneNumber, string email);
     Task<User?> LoginUser(string email, string password);
     Task<UserDetailsDto> GetUserDetailsById(Guid userId);
-    Task<UserImageDTO> UploadUserImage(IFormFile image, Guid userId);
+    Task<UserImageDTO> UploadUserImage(Stream image, Guid userId);
 }

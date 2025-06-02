@@ -4,11 +4,12 @@ import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, Input, Label } from "reactstrap";
-import { acceptTradesManJobResponse, ApiError, ClientJobRequest, Conversation, createTradesManJobResponse, findTradesMan, FindTradesMan, getConversation, getConversations, getGlobalRequests, getMessages, MessageOrResponse, sendMessage } from "@/api";
+import { acceptTradesManJobResponse, ApiError, ClientJobRequest, Conversation, createTradesManJobResponse, findTradesMan, FindTradesMan, getConversation, getConversations, getGlobalRequests, getMessages, Message, MessageOrResponseOrBill, sendMessage, TradesManJobResponse } from "@/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Switch } from "../ui/switch";
 import { useUser } from "@/context/UserContext";
-
+import { useNavigate } from "react-router-dom";
+import { Buffer } from "buffer"
 type ConversationOrGlobalRequest = { conversation: Conversation, globalRequest: undefined } | { globalRequest: ClientJobRequest, conversation: undefined };
 
 export default function () {
@@ -16,18 +17,32 @@ export default function () {
     const [globalRequests, setGlobalRequests] = useState<ClientJobRequest[]>([]);
     const [combinedConversations, setCombinedConversations] = useState<ConversationOrGlobalRequest[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<ConversationOrGlobalRequest | null>(null);
+    const [isCurrentConversationApproved, setIsCurrentConversationApproved] = useState(false);
 
-    const [messages, setMessages] = useState<MessageOrResponse[] | null>(null);
+    const [messages, setMessages] = useState<MessageOrResponseOrBill[] | null>(null);
 
 
-    const [dialogState, setDialogState] = useState<null | { conversationId: string }>(null);
+    const [dialogStateSendOffer, setDialogStateSendOffer] = useState<null | { conversationId: string }>(null);
 
     const [newUserName, setNewUserName] = useState("");
     const [usersSuggestions, setUsersSuggestions] = useState<FindTradesMan[] | null>([]);
     const [includeGlobalRequests, setIncludeGlobalRequests] = useState(false);
     const { token } = useToken();
     const { user } = useUser();
+    if (!user) {
+        const navigator = useNavigate();
+        navigator("/auth")
+    }
+    const isMe = (message: MessageOrResponseOrBill) => {
+        if (message.message) {
+            return message.message.isMe;
+        }
+        // responses and bills are send only by tradesmen
+        if (message.response || message.bill)
+            return user?.isTradesman ?? false;
 
+        throw new Error("Unknown message type");
+    }
     const [date, setDate] = useState("")
     const [amount, setAmount] = useState("")
     const [createOfferDisabled, setCreateOfferDisabled] = useState(false)
@@ -99,6 +114,28 @@ export default function () {
     }, [selectedConversation, includeGlobalRequests])
 
     useEffect(() => {
+        if (!messages) return;
+        if (!selectedConversation) return;
+        let responseApprovedId;
+        if (selectedConversation.conversation) {
+            responseApprovedId = selectedConversation.conversation.clientRequest.tradesManResponseApproveId
+        } else {
+            responseApprovedId = selectedConversation.globalRequest.tradesManResponseApproveId;
+        }
+        if (!responseApprovedId) {
+            setIsCurrentConversationApproved(false);
+            return;
+        }
+        for (const msg of messages) {
+            if (msg.response && msg.response.id == responseApprovedId) {
+                setIsCurrentConversationApproved(true);
+                return;
+            }
+        }
+        setIsCurrentConversationApproved(false);
+    }, [messages]);
+
+    useEffect(() => {
         setMessages(null);
         if (!selectedConversation) {
             return;
@@ -110,6 +147,8 @@ export default function () {
         let controller = new AbortController();
         (async () => {
             const messages = await getMessages(selectedConversation.conversation.id, token, controller.signal);
+            console.log("Conversation selected:");
+            console.log(selectedConversation);
             console.log(messages);
             setMessages(messages);
         })();
@@ -141,15 +180,16 @@ export default function () {
                 }, token);
                 console.log(r);
 
-                const messageResponse: MessageOrResponse = {
-                    isMe: true,
+                const messageResponse: MessageOrResponseOrBill = {
                     sent: r.sent,
                     message: {
+                        isMe: true,
                         from: r.from,
                         text: r.text,
                         id: r.id,
                     },
                     response: undefined,
+                    bill: undefined
                 };
                 setMessages((prev) => {
                     if (!prev) return [messageResponse];
@@ -173,7 +213,7 @@ export default function () {
 
     const onOpenSendOffer = async (conversation: ConversationOrGlobalRequest) => {
         if (conversation.conversation) {
-            setDialogState({ conversationId: conversation.conversation.id });
+            setDialogStateSendOffer({ conversationId: conversation.conversation.id });
             return
         }
         setCreateOfferDisabled(true);
@@ -181,7 +221,7 @@ export default function () {
             const c = await getConversation(conversation.globalRequest.id, token);
             loadConversations();
             loadGlobalRequests();
-            setDialogState({ conversationId: c.id });
+            setDialogStateSendOffer({ conversationId: c.id });
         }
         catch (error) {
             if (error instanceof ApiError) {
@@ -207,11 +247,11 @@ export default function () {
                 workmanShipAmount: amount,
                 conversationId: conversationId
             }, token);
-            const newMessage: MessageOrResponse = {
-                isMe: true,
+            const newMessage: MessageOrResponseOrBill = {
                 sent: r.sent,
                 seen: r.seen,
                 message: undefined,
+                bill: undefined,
                 response: {
                     id: r.id,
                     conversationId: r.conversationId,
@@ -260,6 +300,23 @@ export default function () {
         }
     }
 
+
+    const [billFormData, setBillFormData] = useState<{
+        jobId: null | string,
+        description: string,
+        amount: string,
+        image: null | string,
+        error: null | string
+    }>({
+        jobId: null,
+        description: "",
+        amount: "",
+        image: null,
+        error: null
+    });
+
+
+
     return (
         <div>
             <NavMenu />
@@ -285,7 +342,9 @@ export default function () {
                                     {user?.isTradesman === false && <p className="font-semibold">{conv.conversation.tradesMan.name}</p>}
                                     {user?.isTradesman === true && <p className="font-semibold">{conv.conversation.clientRequest.client.name}</p>}
                                     {conv.conversation.lastMessage && <p className="text-sm text-gray-600">
-                                        {conv.conversation.lastMessage.isMe ? "You: " : ""} {conv.conversation.lastMessage.message ? conv.conversation.lastMessage.message.text : `${conv.conversation.lastMessage.response.workmanshipAmount} by ${conv.conversation.lastMessage.response.aproximationEndDate}`}
+                                        {isMe(conv.conversation.lastMessage) ? "You: " : ""} {conv.conversation.lastMessage.message ? conv.conversation.lastMessage.message.text :
+                                            conv.conversation.lastMessage.response ? `${conv.conversation.lastMessage.response.workmanshipAmount} by ${conv.conversation.lastMessage.response.aproximationEndDate}` :
+                                                `Send bill of ${conv.conversation.lastMessage.bill.amount}`}
                                     </p>}
                                 </CardBody>
                             </div>}
@@ -306,37 +365,74 @@ export default function () {
                             {messages ? "" : "Loading messages..."}
                             {messages?.map((msg) => (
                                 <div
-                                    key={msg.message ? msg.message.id : msg.response.id}
-                                    className={`flex ${msg.isMe ? "justify-end" : "justify-start"
+                                    key={msg.message ? msg.message.id : msg.response ? msg.response.id : msg.bill.id}
+                                    className={`flex ${isMe(msg) ? "justify-end" : "justify-start"
                                         }`}
                                 >
                                     {msg.message ?
+                                        //TODO: of coures I should create 3 different components for each type of message
+                                        // message format
                                         <div
-                                            className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${msg.isMe
+                                            className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${isMe(msg)
                                                 ? "bg-blue-500 rounded-br-none"
                                                 : "bg-gray-400 rounded-bl-none"
                                                 }`}
                                         >
                                             {msg.message.text}
                                         </div> :
-                                        <div
-                                            className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${msg.isMe
-                                                ? "bg-blue-500 rounded-br-none"
-                                                : "bg-gray-400 rounded-bl-none"
-                                                }`}
-                                        >
-                                            <h4>Proposed resolution</h4>
-                                            <p>Can be done by {msg.response.aproximationEndDate}</p>
-                                            <p>The workmanship will be {msg.response.workmanshipAmount}</p>
-                                            <Button
-                                                className="mt-2"
-                                                onClick={async () => {
-                                                    const r = await onAcceptOffer(msg.response.id);
-                                                    if (r) {
-                                                        toast.success("Job accepted!");
-                                                    }
-                                                }}>Accept proposal</Button>
-                                        </div>
+                                        // response format
+                                        msg.response ?
+                                            <div
+                                                className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${!isMe(msg)
+                                                    ?
+                                                    "bg-gray-400 rounded-br-none" :
+                                                    selectedConversation.conversation?.clientRequest.tradesManResponseApproveId === msg.response.id ?
+                                                        "bg-green-500 rounded-br-none" :
+                                                        "bg-blue-500 rounded-br-none"
+                                                    }`}
+                                            >
+                                                <h4>Proposed resolution</h4>
+                                                <p>Can be done by {msg.response.aproximationEndDate}</p>
+                                                <p>The workmanship will be {msg.response.workmanshipAmount}</p>
+                                                {selectedConversation.conversation?.clientRequest.tradesManResponseApproveId === msg.response.id && <div className="mt-2">Proposed accepted</div>}
+
+                                                {!selectedConversation.conversation?.clientRequest.tradesManResponseApproveId && user?.isTradesman === false &&
+                                                    <Button
+                                                        className="mt-2"
+                                                        onClick={async () => {
+                                                            const r = await onAcceptOffer(msg.response.id);
+                                                            if (r) {
+                                                                toast.success("Job accepted!");
+                                                            }
+                                                        }}>Accept proposal</Button>
+                                                }
+
+                                                {selectedConversation.conversation?.clientRequest.tradesManResponseApproveId !== msg.response.id && user?.isTradesman === true &&
+                                                    <div className="mt-2">Proposed send</div>
+                                                }
+
+                                            </div> :
+                                            // bill format
+                                            <div
+                                                className={`max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm ${isMe(msg)
+                                                    ? "bg-blue-500 rounded-br-none"
+                                                    : "bg-gray-400 rounded-bl-none"
+                                                    }`}
+                                            >
+                                                <h4>Bill request</h4>
+                                                <p>{msg.bill.description}</p>
+                                                {user?.isTradesman === true && msg.bill.paid ? <p>The bill was paid</p> : <p>The bill is still not paied</p>}
+                                                {user?.isTradesman === false && msg.bill.paid ?
+                                                    <div>You paied {msg.bill.amount}</div> :
+                                                    <div>
+                                                        <p>You have to pay {msg.bill.amount}</p>
+                                                        <Button
+                                                            className="mt-2"
+                                                            onClick={async () => {
+
+                                                            }}>Mark as paid</Button>
+                                                    </div>}
+                                            </div>
                                     }
 
                                 </div>
@@ -353,23 +449,134 @@ export default function () {
                             onKeyDown={(e) => e.key === "Enter" && onSendMessage()}
                         />
                         <Button onClick={onSendMessage}>Send</Button>
-                        {user?.isTradesman &&
+                        {user?.isTradesman && !selectedConversation.conversation?.clientRequest.jobApprovedId && !selectedConversation.globalRequest?.jobApprovedId &&
                             <Button variant="outline" onClick={() => onOpenSendOffer(selectedConversation)} disabled={createOfferDisabled}>
                                 Create Offer
+                            </Button>
+                        }
+                        {isCurrentConversationApproved && user?.isTradesman === true &&
+                            <Button variant="outline" onClick={() => {
+                                setBillFormData({
+                                    jobId: selectedConversation.conversation?.clientRequest.jobApprovedId!,
+                                    amount: "",
+                                    description: "",
+                                    image: null,
+                                    error: null
+                                })
+                            }}>
+                                Send bill
                             </Button>
                         }
                     </div>
                 </div>
                 }
 
+                <Dialog open={!!billFormData.jobId} onOpenChange={(open) => {
+                    if (!open) setBillFormData({
+                        jobId: null,
+                        amount: "",
+                        description: "",
+                        image: null,
+                        error: null
+                    });
+                }}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Send a bill</DialogTitle>
+                        </DialogHeader>
+
+                        <div>
+                            <Label htmlFor="description">Description</Label>
+                            <Input
+                                type="text"
+                                name="description"
+                                value={billFormData.description}
+                                onChange={() => {
+                                    setBillFormData({
+                                        ...billFormData,
+                                        description: billFormData.description,
+                                    })
+                                }}
+                                placeholder="Enter description"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="amount">Amount</Label>
+                            <Input
+                                type="number"
+                                name="amount"
+                                value={billFormData.amount}
+                                onChange={() => {
+                                    setBillFormData({
+                                        ...billFormData,
+                                        amount: billFormData.amount,
+                                    })
+                                }}
+                                placeholder="Enter amount"
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="image">Image (required)</Label>
+                            <Input
+                                type="file"
+                                name="image"
+                                accept="image/jpeg, image/png"
+                                onChange={e => {
+                                    (async () => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            const data = await e.target.files[0].arrayBuffer();
+                                            setBillFormData({
+                                                ...billFormData,
+                                                image: Buffer.from(data).toString("base64"),
+                                            });
+                                            // setBillFormData({
+                                            //     ...billFormData,
+                                            //     image: await e.target.files[0].arrayBuffer()
+                                            // })
+                                        }
+                                    })();
+                                }}
+                            />
+                        </div>
+
+                        {billFormData.error && <p className="text-red-500 text-sm">{billFormData.error}</p>}
+
+
+                        <Button type="submit" onClick={async (e) => {
+                            let amountNum;
+                            try {
+                                amountNum = parseFloat(billFormData.amount);
+                            } catch (error) {
+                                setBillFormData({ ...billFormData, error: "Invalid amount" });
+                                return;
+                            }
+                            if (!billFormData.description.trim()) {
+                                setBillFormData({ ...billFormData, error: "Description is required" })
+                                return;
+                            };
+                            try {
+                            } catch (error) {
+                                if (error instanceof ApiError) {
+                                    if (error.error.type !== "aborted") {
+                                        console.log(error);
+                                        toast.error(`${error.message}`);
+                                    }
+                                }
+                            }
+                        }}>Submit</Button>
+                    </DialogContent>
+                </Dialog>
+
                 {/* SendRequest dialog */}
-                <Dialog open={!!dialogState} onOpenChange={(open) => { if (!open) setDialogState(null); }}>
+                <Dialog open={!!dialogStateSendOffer} onOpenChange={(open) => { if (!open) setDialogStateSendOffer(null); }}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Create an offer</DialogTitle>
                         </DialogHeader>
                         <div>
-                            <Label htmlFor="date">Select a Date</Label>
+                            <Label htmlFor="date">Select an aproximated end date</Label>
                             <Input
                                 id="date"
                                 type="date"
@@ -379,7 +586,7 @@ export default function () {
                         </div>
 
                         <div>
-                            <Label htmlFor="amount">Enter Amount</Label>
+                            <Label htmlFor="amount">Workmapship amount</Label>
                             <Input
                                 id="amount"
                                 type="number"
@@ -395,8 +602,8 @@ export default function () {
                                 const amountNum = parseFloat(amount);
                                 if (date.trim() === "") throw new Error();
                                 try {
-                                    await onSendOffer(dialogState!.conversationId, amountNum, date);
-                                    setDialogState(null);
+                                    await onSendOffer(dialogStateSendOffer!.conversationId, amountNum, date);
+                                    setDialogStateSendOffer(null);
                                 } catch (error) {
                                     if (error instanceof ApiError) {
                                         if (error.error.type !== "aborted") {
@@ -412,6 +619,7 @@ export default function () {
                     </DialogContent>
                 </Dialog>
             </div>
+
         </div >
     );
 }

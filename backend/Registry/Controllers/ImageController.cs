@@ -8,21 +8,23 @@ namespace Registry.Controllers
     public class ImageController : ControllerBase
     {
         private IImageService ImageService;
-        public ImageController(IImageService imageService) {
+        public ImageController(IImageService imageService)
+        {
             ImageService = imageService;
         }
 
         [HttpPost]
         [Route("upload")]
         [Consumes("multipart/form-data")]
-        public async Task<ActionResult<string>> UploadImage(IFormFile image)
+        public async Task<ActionResult<string>> UploadImage(IFormFile image, CancellationToken token)
         {
-            string result = "";
+            string result;
             try
             {
-                result = await ImageService.UploadImage(image);
+                result = await ImageService.UploadImage(image.OpenReadStream(), token);
             }
-            catch (Exception ex) { 
+            catch (Exception ex)
+            {
                 return BadRequest(ex.Message);
             }
 
