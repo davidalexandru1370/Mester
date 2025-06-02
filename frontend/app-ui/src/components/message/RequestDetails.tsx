@@ -73,20 +73,20 @@ export default function ({
             controller.abort();
         }
     }, [selectedRequest]);
-    // const handleImageChange = (index: number, value: string) => {
-    //     const updatedImages = [...formData.imagesUrl];
-    //     updatedImages[index] = value;
-    //     handleChange("imagesUrl", updatedImages);
-    // };
+    const handleImageChange = (index: number, value: string) => {
+        const updatedImages = Array.from(selectedRequest.imagesUrl);
+        updatedImages[index] = value;
+        setSelectedRequest({ ...selectedRequest, imagesUrl: updatedImages })
+    };
 
-    // const addImage = () => {
-    //     handleChange("imagesUrl", [...formData.imagesUrl, ""]);
-    // };
+    const addImage = () => {
+        //setSelectedRequest({ ...selectedRequest, imagesUrl: updatedImages })
+    };
 
-    // const removeImage = (index: number) => {
-    //     const updatedImages = formData.imagesUrl.filter((_, i) => i !== index);
-    //     handleChange("imagesUrl", updatedImages);
-    // };
+    const removeImage = (index: number) => {
+        const updatedImages = selectedRequest.imagesUrl.filter((_, i) => i !== index);
+        setSelectedRequest({ ...selectedRequest, imagesUrl: updatedImages })
+    };
     const [includeStartDate, setIncludeStartDate] = useState(initialRequestDetails?.startDate ? true : false);
 
     return (
@@ -153,9 +153,9 @@ export default function ({
                         <Label className="ml-1">Open</Label>
                     </div>
 
-                    {/* <div className="space-y-2">
+                    <div className="space-y-2">
                         <Label>Images</Label>
-                        {formData.imagesUrl.map((url, index) => (
+                        {selectedRequest.imagesUrl.map((url, index) => (
                             <div key={index} className="flex items-center gap-2">
                                 <Input
                                     value={url}
@@ -169,7 +169,7 @@ export default function ({
                         <Button variant="outline" onClick={addImage}>
                             Add Image
                         </Button>
-                    </div> */}
+                    </div>
                     <div>
                         <Button onClick={() => {
                             const r = { ...selectedRequest };
