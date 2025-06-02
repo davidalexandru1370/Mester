@@ -44,5 +44,6 @@ export default ServiceTypeCard;
 
 export interface ServiceTypeCardProps {
   title: string;
+  tradesmanId: string;
   specialities: Speciality[];
 }

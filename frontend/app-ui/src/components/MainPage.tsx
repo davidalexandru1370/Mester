@@ -130,6 +130,7 @@ export default function MainPage() {
             >
               <div onClick={() => redirectToTradesman(tradesman.id)}>
                 <ServiceTypeCard
+                  tradesmanId={tradesman.id}
                   key={tradesman.id}
                   title={tradesman.name}
                   specialities={tradesman.specialities}

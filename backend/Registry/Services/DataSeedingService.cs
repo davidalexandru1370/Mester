@@ -24,25 +24,25 @@ public class DataSeedingService : IDataSeedingService
             {
                 Id = Guid.Parse("993adea3-d67a-47b8-a504-b892c73ba3b5"),
                 Type = "Gresie si faianta",
-                ImageUrl = "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjgzMzQ5YmZmY2UwODE5MWJjZjViYjMxYTkxNzBmNTM6ZmlsZV8wMDAwMDAwMDkzNTA2MWY4YWNkOTJhMjViZTYxNjE0OCIsInRzIjoiNDg1NjA4IiwicCI6InB5aSIsInNpZyI6IjY5ZjFiMWVhMzdmNmFkNmIwYWQxMWYwMzI2MmZjMmM1OGFlMThkYzc0Y2QxMWNlOGQ1ZjMwNDBhMjA3ZTdiZDEiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ=="
+                ImageUrl = "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/ChatGPT%20Image%20May%2025%2C%202025%2C%2004_27_39%20PM.png?alt=media&token=eb348a62-4e7a-417c-a8e3-a80e43f826bf"
             },
             new()
             {
                 Id = Guid.Parse("db6602a4-56b1-4694-93ea-68d9e5463dad"),
                 Type = "Instalatii sanitare",
-                ImageUrl = "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjgzMzRhM2NmMTAwODE5MWJiODA1YmVhMGI0MDA4ZDY6ZmlsZV8wMDAwMDAwMDUxZTA2MWY4OGQzYmVlZjlkYTg2MzUyYSIsInRzIjoiNDg1NjA4IiwicCI6InB5aSIsInNpZyI6IjIyZTQ1MjcwM2Q2MTIxZGE2MmM5ZTc0NmY0MGFhYzhjYjdjNGIyMTNlMTA0YmU4ZDkxYmE2ZmUwYTI2MTNlZDUiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ=="
+                ImageUrl = "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/ChatGPT%20Image%20May%2025%2C%202025%2C%2004_57_53%20PM.png?alt=media&token=e16e0196-0d48-4031-8912-dbfffec95191"
             },
             new()
             {
                 Id = Guid.Parse("b437715a-4143-460c-8125-69ba26e7f6f3"),
                 Type = "Zugravit",
-                ImageUrl = "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjgzMzRhMDM2M2RjODE5MThiMzYxMGFhMmM5NGUyZjc6ZmlsZV8wMDAwMDAwMDNjNmM2MWY4OTlmNGE2YzRmMzUyMDkxZCIsInRzIjoiNDg1NjA4IiwicCI6InB5aSIsInNpZyI6ImRjY2Q1NjBlMTE4YTI3MjE0MzZjYzgwOGNmNmRlYWZjZmI2YzJmMDgxOTM0NDc5MTY1ZjhhYzJiNzZjZDdlMWEiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ=="
+                ImageUrl = "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/ChatGPT%20Image%20May%2025%2C%202025%2C%2004_56_00%20PM.png?alt=media&token=e956cb70-ec84-4629-8953-ab0708681dd0"
             },
             new()
             {
                 Id = Guid.Parse("bb0ddd50-e749-4cea-aa57-22e6acb413eb"),
                 Type = "Parchet",
-                ImageUrl = "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjgzMzRhNjRmNzcwODE5MWI0NjdhNDE3YmRlMjI1YTE6ZmlsZV8wMDAwMDAwMGYwMjA2MWY4OTEwMjM5NDVmNDNmM2ViOSIsInRzIjoiNDg1NjA4IiwicCI6InB5aSIsInNpZyI6ImVmNmUyMmU4ZWM4MTM2MjU1NGJlNmQyMjQ3MTU1ZTg2NGRhOTU1NmQ4MjcwYjdjY2Y0ZjUzMGU1ZTZmNzcxOWEiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ=="
+                ImageUrl = "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/ChatGPT%20Image%20May%2025%2C%202025%2C%2004_59_45%20PM.png?alt=media&token=823c9f76-3af9-4100-9e59-b76f578d7b39"
             },
             new()
             {
