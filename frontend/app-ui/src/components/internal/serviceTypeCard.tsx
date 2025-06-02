@@ -7,23 +7,44 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { TradesManDto } from "@/domain/types/tradesman/TradesManDto";
 
 const ServiceTypeCard: FC<ServiceTypeCardProps> = ({
   title,
+  tradesmanId,
+  tradesman,
   specialities,
 }: ServiceTypeCardProps) => {
   return (
     <div>
       <div className="flex flex-col items-center justify-center">
-        <p>{title}</p>
+        {/* Tradesman profile image */}
+        {tradesman.imageUrl && (
+          <img
+            src={tradesman.imageUrl}
+            alt="Profile"
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              objectFit: "cover",
+              marginBottom: 16,
+              border: "1.5px solid #ccc",
+            }}
+          />
+        )}
+        <a href={`/tradesman/${tradesmanId}`}>{title}</a>
         <Carousel className="w-full max-w-xs">
           <CarouselContent>
             {Array.from({ length: specialities.length }).map((_, index) => {
               const speciality: Speciality = specialities[index];
               return (
                 <CarouselItem key={index}>
-                  <div className="p-1">
-                    <img src={speciality.imageUrl} />
+                  <div className="p-1 d-flex flex-column align-items-center">
+                    <img
+                      src={speciality.imageUrl}
+                      style={{ width: "150px", height: "150px" }}
+                    />
                     <p>
                       Pret: {speciality.price} / {speciality.unitOfMeasure}
                     </p>
@@ -44,5 +65,7 @@ export default ServiceTypeCard;
 
 export interface ServiceTypeCardProps {
   title: string;
+  tradesmanId: string;
+  tradesman: TradesManDto;
   specialities: Speciality[];
 }

@@ -157,6 +157,7 @@ namespace Registry.Services
             };
             await _context.Conversations.AddAsync(conversation);
             await _context.SaveChangesAsync();
+            conversation = await _context.Conversations.Where(c => c.Id == conversation.Id).Include(c => c.TradesMan).FirstOrDefaultAsync();
             return conversation.ToConversationDTO(client.Id);
         }
 

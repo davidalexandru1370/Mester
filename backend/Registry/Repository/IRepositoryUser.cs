@@ -1,4 +1,5 @@
-﻿using Registry.Models;
+﻿using Registry.DTO;
+using Registry.Models;
 
 namespace Registry.Repository;
 

@@ -14,4 +14,7 @@ public interface ITradesManService
     Task<Speciality> AddSpecialty(Speciality speciality);
     Task<List<Speciality>> AddSpecialitiesBulk(List<Speciality> specialities);
     Task<List<FindTradesManDTO>> FindTradesMen(string pattern, int limit);
+    Task AddWorkorderImages(Guid tradesmanId, List<IFormFile> images);
+    Task AddWorkorderImages(Guid tradesmanId, List<string> images);
+
 }

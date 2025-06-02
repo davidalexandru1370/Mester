@@ -8,10 +8,9 @@ import Logout from "./components/Logout.tsx";
 import ProtectedRoute from "./components/routing/ProtectedRoute.tsx";
 import Conversations from "./components/message/Conversations.tsx";
 import Requests from "./components/message/Requests.tsx";
-import { useUser } from "./context/UserContext.tsx";
+import TradesmanProfile from "./components/TradesmanProfile.tsx";
 
 function App() {
-  const { user } = useUser();
   return (
     <BrowserRouter>
       <Routes>
@@ -34,16 +33,30 @@ function App() {
         />
         <Route path="/user" element={<Profile />} />
         <Route path="/logout" element={<Logout />} />
-        <Route path="/conversations" element={
-          <ProtectedRoute>
-            <Conversations />
-          </ProtectedRoute>
-        } />
-        <Route path="/requests" element={
-          <ProtectedRoute>
-            <Requests />
-          </ProtectedRoute>
-        } />
+        <Route
+          path="/conversations"
+          element={
+            <ProtectedRoute>
+              <Conversations />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/requests"
+          element={
+            <ProtectedRoute>
+              <Requests />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tradesman/:tradesmanId"
+          element={
+            <ProtectedRoute>
+              <TradesmanProfile />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

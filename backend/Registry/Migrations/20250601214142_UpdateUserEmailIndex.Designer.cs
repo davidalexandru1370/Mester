@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Registry.Repository;
 
@@ -11,9 +12,11 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    partial class TradesManDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250601214142_UpdateUserEmailIndex")]
+    partial class UpdateUserEmailIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,43 +25,6 @@ namespace Registry.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Registry.Models.Bill", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("BillImage")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("JobId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Paid")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("Seen")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Sent")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("JobId");
-
-                    b.ToTable("Bills");
-                });
-
             modelBuilder.Entity("Registry.Models.ClientJobRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -66,10 +32,6 @@ namespace Registry.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.PrimitiveCollection<string>("ImagesUrl")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -123,10 +85,9 @@ namespace Registry.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TradesManId");
+                    b.HasIndex("RequestId");
 
-                    b.HasIndex("RequestId", "TradesManId")
-                        .IsUnique();
+                    b.HasIndex("TradesManId");
 
                     b.ToTable("Conversations");
                 });
@@ -134,7 +95,6 @@ namespace Registry.Migrations
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("EndDate")
@@ -148,8 +108,7 @@ namespace Registry.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TradesManJobResponseId")
-                        .IsUnique();
+                    b.HasIndex("TradesManJobResponseId");
 
                     b.ToTable("Jobs");
                 });
@@ -281,7 +240,10 @@ namespace Registry.Migrations
                     b.Property<DateTime>("AproximationEndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("ConversationId")
+                    b.Property<Guid>("ClientJobRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ConversationId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("Seen")
@@ -290,13 +252,20 @@ namespace Registry.Migrations
                     b.Property<DateTime>("Sent")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("TradesManId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("WorkmanshipAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClientJobRequestId");
+
                     b.HasIndex("ConversationId");
+
+                    b.HasIndex("TradesManId");
 
                     b.ToTable("TradesManJobResponses");
                 });
@@ -361,17 +330,6 @@ namespace Registry.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Registry.Models.Bill", b =>
-                {
-                    b.HasOne("Registry.Models.Job", "Job")
-                        .WithMany("Bills")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Job");
-                });
-
             modelBuilder.Entity("Registry.Models.ClientJobRequest", b =>
                 {
                     b.HasOne("Registry.Models.User", "InitiatedBy")
@@ -410,11 +368,19 @@ namespace Registry.Migrations
 
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
-                    b.HasOne("Registry.Models.TradesManJobResponse", "TradesManJobResponse")
-                        .WithOne()
-                        .HasForeignKey("Registry.Models.Job", "TradesManJobResponseId")
+                    b.HasOne("Registry.Models.ClientJobRequest", "JobRequest")
+                        .WithMany()
+                        .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Registry.Models.TradesManJobResponse", "TradesManJobResponse")
+                        .WithMany()
+                        .HasForeignKey("TradesManJobResponseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("JobRequest");
 
                     b.Navigation("TradesManJobResponse");
                 });
@@ -471,13 +437,25 @@ namespace Registry.Migrations
 
             modelBuilder.Entity("Registry.Models.TradesManJobResponse", b =>
                 {
-                    b.HasOne("Registry.Models.Conversation", "Conversation")
-                        .WithMany("Responses")
-                        .HasForeignKey("ConversationId")
+                    b.HasOne("Registry.Models.ClientJobRequest", "ClientJobRequest")
+                        .WithMany()
+                        .HasForeignKey("ClientJobRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Conversation");
+                    b.HasOne("Registry.Models.Conversation", null)
+                        .WithMany("Responses")
+                        .HasForeignKey("ConversationId");
+
+                    b.HasOne("Registry.Models.User", "TradesMan")
+                        .WithMany()
+                        .HasForeignKey("TradesManId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClientJobRequest");
+
+                    b.Navigation("TradesMan");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManSpecialities", b =>
@@ -504,11 +482,6 @@ namespace Registry.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Responses");
-                });
-
-            modelBuilder.Entity("Registry.Models.Job", b =>
-                {
-                    b.Navigation("Bills");
                 });
 
             modelBuilder.Entity("Registry.Models.Speciality", b =>

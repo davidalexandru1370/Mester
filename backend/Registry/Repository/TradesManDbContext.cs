@@ -24,6 +24,7 @@ namespace Registry.Repository
         public virtual DbSet<Message> Messages { get; set; }
         public virtual DbSet<Conversation> Conversations { get; set; }
         public virtual DbSet<TradesManJobResponse> TradesManJobResponses { get; set; }
+        public virtual DbSet<TradesManImages> TradesManImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -36,6 +37,11 @@ namespace Registry.Repository
                 .HasOne(x => x.TradesManProfile)
                 .WithOne().OnDelete(DeleteBehavior.Restrict)
                 .HasForeignKey<TradesMan>(x => x.Id);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique()
+                .HasFilter("[Email] IS NOT NULL");
 
             modelBuilder.Entity<Speciality>().HasIndex(e => e.Type).IsUnique();
 
@@ -60,6 +66,7 @@ namespace Registry.Repository
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.JobApproved).WithOne();
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.InitiatedBy).WithMany().OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<TradesMan>().HasMany(x => x.Images);
             modelBuilder.Entity<Bill>().Property(b => b.Amount).HasPrecision(18, 2);
         }
 

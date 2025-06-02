@@ -7,4 +7,5 @@ public class TradesMan
     public string City { get; set; }
     public string County { get; set; }
     public List<TradesManSpecialities> Specialities { get; set; }
+    public List <TradesManImages> Images { get; set; }
 }
