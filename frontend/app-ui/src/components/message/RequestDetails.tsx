@@ -80,6 +80,7 @@ export default function ({
     };
 
     const addImage = () => {
+
         //setSelectedRequest({ ...selectedRequest, imagesUrl: updatedImages })
     };
 
@@ -157,18 +158,53 @@ export default function ({
                         <Label>Images</Label>
                         {selectedRequest.imagesUrl.map((url, index) => (
                             <div key={index} className="flex items-center gap-2">
-                                <Input
+                                {/* <Input
                                     value={url}
                                     onChange={(e) => handleImageChange(index, e.target.value)}
                                 />
                                 <Button variant="destructive" onClick={() => removeImage(index)}>
                                     Remove
-                                </Button>
+                                </Button> */}
+                                <img
+                                src={
+                                url &&
+                                /^https?:\/\/[^\s]+$/.test(url)
+                                ? url
+                                : "https://via.placeholder.com/120x120.png?text=Profile"
+                                }
+                                alt="req"
+                                style={{
+                                width: 120,
+                                height: 120,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                                marginBottom: 10,
+                                border: "2px solid #ccc",
+                                }}
+                                />
                             </div>
                         ))}
-                        <Button variant="outline" onClick={addImage}>
-                            Add Image
-                        </Button>
+                        {/* <Input
+                                type="file"
+                                multiple
+                                name="image"
+                                accept="image/jpeg, image/png"
+                                onChange={e => {
+                                    (async () => {
+                                        if (e.target.files) {
+                                            const data = await Array.from(e.target.files).forEach(file => file.arrayBuffer());
+                                            setBillFormData({
+                                                ...billFormData,
+                                                image: Buffer.from(data).toString("base64"),
+                                            });
+                                            // setBillFormData({
+                                            //     ...billFormData,
+                                            //     image: await e.target.files[0].arrayBuffer() params.imagesUrl.every(btoa);
+                                            // })
+                                        }
+                                    })();
+                                }}
+                            /> */}
                     </div>
                     <div>
                         <Button onClick={() => {
