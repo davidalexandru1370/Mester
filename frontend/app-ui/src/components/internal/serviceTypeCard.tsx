@@ -34,6 +34,7 @@ const ServiceTypeCard: FC<ServiceTypeCardProps> = ({
           />
         )}
         <a href={`/tradesman/${tradesmanId}`}>{title}</a>
+        <p>{`${tradesman.county}, ${tradesman.city}`}</p>
         <Carousel className="w-full max-w-xs">
           <CarouselContent>
             {Array.from({ length: specialities.length }).map((_, index) => {
