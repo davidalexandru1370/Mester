@@ -24,5 +24,6 @@ namespace Registry.Services.Interfaces
         Task<ClientJobRequestDTO> UpdateClientRequest(User user, Guid clientRequestId, UpdateClientJobRequest request);
         Task<List<ClientJobRequestDTO>> GetGlobalRequests(User tradesMan);
         Task<BillDTO> AddBill(User tradesMan, Guid jobId, CreateBillRequest billRequest);
+        Task<BillDTO> PayBill(User user, Guid billId);
     }
 }
