@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, Input, Label } from "reactstrap";
-import { ApiError, ClientJobRequest, Conversation, findTradesMan, FindTradesMan, getConversation, getConversations, getGlobalRequests, getMessages, MessageOrResponse, sendMessage } from "@/api";
+import { acceptTradesManJobResponse, ApiError, ClientJobRequest, Conversation, createTradesManJobResponse, findTradesMan, FindTradesMan, getConversation, getConversations, getGlobalRequests, getMessages, MessageOrResponse, sendMessage } from "@/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Switch } from "../ui/switch";
 import { useUser } from "@/context/UserContext";
@@ -19,12 +19,19 @@ export default function () {
 
     const [messages, setMessages] = useState<MessageOrResponse[] | null>(null);
 
-    const [dialogOpen, setDialogOpen] = useState(false);
+
+    const [dialogState, setDialogState] = useState<null | { conversationId: string }>(null);
+
     const [newUserName, setNewUserName] = useState("");
     const [usersSuggestions, setUsersSuggestions] = useState<FindTradesMan[] | null>([]);
     const [includeGlobalRequests, setIncludeGlobalRequests] = useState(false);
     const { token } = useToken();
     const { user } = useUser();
+
+    const [date, setDate] = useState("")
+    const [amount, setAmount] = useState("")
+    const [createOfferDisabled, setCreateOfferDisabled] = useState(false)
+
     const loadConversations = async (signal?: AbortSignal) => {
         try {
             const convs = await getConversations(token, signal);
@@ -71,39 +78,6 @@ export default function () {
     }, [conversations, globalRequests]);
 
 
-
-    useEffect(() => {
-        if (!dialogOpen) {
-            setUsersSuggestions(null);
-            return;
-        }
-        let controller = new AbortController();
-        (async () => {
-            const trimmedUserName = newUserName.trim();
-            try {
-                const suggestions = await findTradesMan({
-                    pattern: trimmedUserName,
-                    limit: 10
-                }, token, controller.signal);
-                setUsersSuggestions(suggestions);
-            } catch (error) {
-                if (error instanceof ApiError) {
-                    if (error.error.type !== "aborted") {
-                        toast.error(`${error.message}`);
-                    }
-                    return;
-                } else {
-                    throw error;
-                }
-            }
-        })();
-
-
-        return () => {
-            controller.abort();
-        };
-    }, [dialogOpen, newUserName]);
-
     useEffect(() => {
         let controller = new AbortController();
         if (!includeGlobalRequests) {
@@ -136,6 +110,7 @@ export default function () {
         let controller = new AbortController();
         (async () => {
             const messages = await getMessages(selectedConversation.conversation.id, token, controller.signal);
+            console.log(messages);
             setMessages(messages);
         })();
         return () => {
@@ -195,22 +170,95 @@ export default function () {
         })();
     };
 
-    const onClickUserSuggestion = (user: FindTradesMan) => {
-        setDialogOpen(false);
-        setNewUserName("");
-        // (async () => {
-        //     try {
-        //         const conversation = await getConversation(user.id, token);
-        //         setConversations([conversation, ...conversations]);
-        //         setSelectedConversation(conversation);
-        //     } catch (error) {
-        //         if (error instanceof ApiError) {
-        //             toast.error(`${error.message}`);
-        //         }
-        //     }
-        // })();
+
+    const onOpenSendOffer = async (conversation: ConversationOrGlobalRequest) => {
+        if (conversation.conversation) {
+            setDialogState({ conversationId: conversation.conversation.id });
+            return
+        }
+        setCreateOfferDisabled(true);
+        try {
+            const c = await getConversation(conversation.globalRequest.id, token);
+            loadConversations();
+            loadGlobalRequests();
+            setDialogState({ conversationId: c.id });
+        }
+        catch (error) {
+            if (error instanceof ApiError) {
+                if (error.error.type !== "aborted") {
+                    console.log(error);
+                    toast.error(`${error.message}`);
+                }
+                return;
+            } else {
+                throw error;
+            }
+        }
+        finally {
+            setCreateOfferDisabled(false);
+        };
     }
 
+
+    const onSendOffer = async (conversationId: string, amount: number, endDate: string) => {
+        try {
+            const r = await createTradesManJobResponse({
+                aproximationEndDate: endDate,
+                workmanShipAmount: amount,
+                conversationId: conversationId
+            }, token);
+            const newMessage: MessageOrResponse = {
+                isMe: true,
+                sent: r.sent,
+                seen: r.seen,
+                message: undefined,
+                response: {
+                    id: r.id,
+                    conversationId: r.conversationId,
+                    aproximationEndDate: r.aproximationEndDate,
+                    workmanshipAmount: r.workmanshipAmount,
+                    sent: r.sent,
+                    seen: r.seen,
+                }
+            }
+            setMessages((prev) => {
+                if (prev === null) {
+                    return [newMessage]
+                } else {
+                    return [...prev, newMessage];
+                }
+            })
+        }
+        catch (error) {
+            if (error instanceof ApiError) {
+                if (error.error.type !== "aborted") {
+                    console.log(error.message);
+                    toast.error(`${error.message}`);
+                }
+                return;
+            } else {
+                throw error;
+            }
+        }
+    };
+
+    const onAcceptOffer = async (responseId: string) => {
+        //TODO: update the UI to remove the accept response button and show that this response was accepted
+        try {
+            await acceptTradesManJobResponse(responseId, token);
+            return true;
+        } catch (error) {
+            if (error instanceof ApiError) {
+                if (error.error.type !== "aborted") {
+                    console.log(error.message);
+                    toast.error(`${error.message}`);
+                }
+                return false;
+            } else {
+                throw error;
+            }
+        }
+    }
 
     return (
         <div>
@@ -234,16 +282,17 @@ export default function () {
                             {conv.conversation && <div>
                                 <CardHeader>{conv.conversation.clientRequest.title}</CardHeader>
                                 <CardBody className="p-4">
-                                    <p className="font-semibold">{conv.conversation.tradesMan.name}</p>
+                                    {user?.isTradesman === false && <p className="font-semibold">{conv.conversation.tradesMan.name}</p>}
+                                    {user?.isTradesman === true && <p className="font-semibold">{conv.conversation.clientRequest.client.name}</p>}
                                     {conv.conversation.lastMessage && <p className="text-sm text-gray-600">
-                                        {conv.conversation.lastMessage.isMe ? "You: " : ""} {conv.conversation.lastMessage.message ? conv.conversation.lastMessage.message.text : `${conv.conversation.lastMessage.response.workmanshipAmount} by ${conv.conversation.lastMessage.response.AproximationEndDate}`}
+                                        {conv.conversation.lastMessage.isMe ? "You: " : ""} {conv.conversation.lastMessage.message ? conv.conversation.lastMessage.message.text : `${conv.conversation.lastMessage.response.workmanshipAmount} by ${conv.conversation.lastMessage.response.aproximationEndDate}`}
                                     </p>}
                                 </CardBody>
                             </div>}
                             {conv.globalRequest && <div>
                                 <CardHeader>{conv.globalRequest.title}</CardHeader>
                                 <CardBody className="p-4">
-                                    Global
+                                    Global request by {conv.globalRequest.client.name}
                                 </CardBody>
                             </div>}
                         </Card>
@@ -277,13 +326,15 @@ export default function () {
                                                 }`}
                                         >
                                             <h4>Proposed resolution</h4>
-                                            <p>Can be done by {msg.response.AproximationEndDate}</p>
+                                            <p>Can be done by {msg.response.aproximationEndDate}</p>
                                             <p>The workmanship will be {msg.response.workmanshipAmount}</p>
                                             <Button
                                                 className="mt-2"
-                                                onClick={() => {
-                                                    // Handle job acceptance logic here
-                                                    toast.success("Job accepted!");
+                                                onClick={async () => {
+                                                    const r = await onAcceptOffer(msg.response.id);
+                                                    if (r) {
+                                                        toast.success("Job accepted!");
+                                                    }
                                                 }}>Accept proposal</Button>
                                         </div>
                                     }
@@ -302,34 +353,62 @@ export default function () {
                             onKeyDown={(e) => e.key === "Enter" && onSendMessage()}
                         />
                         <Button onClick={onSendMessage}>Send</Button>
+                        {user?.isTradesman &&
+                            <Button variant="outline" onClick={() => onOpenSendOffer(selectedConversation)} disabled={createOfferDisabled}>
+                                Create Offer
+                            </Button>
+                        }
                     </div>
                 </div>
                 }
 
-                {/* New Conversation Dialog */}
-                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                {/* SendRequest dialog */}
+                <Dialog open={!!dialogState} onOpenChange={(open) => { if (!open) setDialogState(null); }}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Start a New Conversation</DialogTitle>
+                            <DialogTitle>Create an offer</DialogTitle>
                         </DialogHeader>
-                        <Input
-                            value={newUserName}
-                            onChange={(e) => setNewUserName(e.target.value)}
-                            placeholder="Enter user name"
-                            className="my-4"
-                        />
-                        <ul>
-                            {usersSuggestions?.map((user) => (
-                                <li
-                                    key={`Sugested ${user.id}`}
-                                    className="cursor-pointer hover:bg-gray-100 p-2 rounded"
-                                    onClick={() => onClickUserSuggestion(user)}
-                                >
-                                    {user.imageUrl && <img src={user.imageUrl} alt={user.name} className="inline-block w-6 h-6 rounded-full ml-2" />}
-                                    {user.name}
-                                </li>
-                            ))}
-                        </ul>
+                        <div>
+                            <Label htmlFor="date">Select a Date</Label>
+                            <Input
+                                id="date"
+                                type="date"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="amount">Enter Amount</Label>
+                            <Input
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                            />
+                        </div>
+
+                        <Button type="submit" onClick={async (e) => {
+                            try {
+                                const amountNum = parseFloat(amount);
+                                if (date.trim() === "") throw new Error();
+                                try {
+                                    await onSendOffer(dialogState!.conversationId, amountNum, date);
+                                    setDialogState(null);
+                                } catch (error) {
+                                    if (error instanceof ApiError) {
+                                        if (error.error.type !== "aborted") {
+                                            console.log(error);
+                                            toast.error(`${error.message}`);
+                                        }
+                                    }
+                                }
+                            } catch (error) {
+                                toast.error("Invalid input. Please check the amount and date.");
+                            }
+                        }}>Submit</Button>
                     </DialogContent>
                 </Dialog>
             </div>

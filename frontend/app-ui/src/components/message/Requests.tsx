@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, } from "reactstrap";
-import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestWithoutId, createRequest, findTradesMan, FindTradesMan, updateRequest } from "@/api";
+import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestCreateOrUpdate, createRequest, findTradesMan, FindTradesMan, updateRequest } from "@/api";
 import { Dialog, DialogContent, } from "../ui/dialog";
 import { Plus } from "lucide-react";
 import RequestDetails from "./RequestDetails";
@@ -104,15 +104,15 @@ export default function () {
         // })();
     }
 
-    const createOrUpdateRequest = async (request: ClientJobRequestWithoutId) => {
+    const createOrUpdateRequest = async (request: ClientJobRequestCreateOrUpdate) => {
         setDisableUpdateButton(true);
         try {
             if (request.id) {
                 // Just why, typescript?
-                await updateRequest({ ...request, id: request.id }, token);
+                const updatedResponse = await updateRequest({ ...request, id: request.id }, token);
                 let response = clientRequests.map(r => {
-                    if (r.id === request.id) {
-                        return { ...request, id: request.id };
+                    if (r.id === updatedResponse.id) {
+                        return updatedResponse;
                     } else {
                         return r
                     }
@@ -144,7 +144,7 @@ export default function () {
             <div className="flex h-screen bg-gray-100">
                 {/* Conversations List */}
                 <div className="w-1/3 border-r bg-white p-4 overflow-y-auto">
-                    <Button size="icon" variant="outline" onClick={() => setDialogOpen(true)} style={{marginBottom: 10,}}>
+                    <Button size="icon" variant="outline" onClick={() => setDialogOpen(true)} style={{ marginBottom: 10, }}>
                         <Plus className="w-5 h-5" />
                     </Button>
                     {clientRequests.map((request) => (

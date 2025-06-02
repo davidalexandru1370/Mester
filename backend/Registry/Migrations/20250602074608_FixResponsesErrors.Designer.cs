@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Registry.Repository;
 
@@ -11,9 +12,11 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    partial class TradesManDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250602074608_FixResponsesErrors")]
+    partial class FixResponsesErrors
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -93,7 +96,6 @@ namespace Registry.Migrations
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("EndDate")
@@ -107,8 +109,7 @@ namespace Registry.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TradesManJobResponseId")
-                        .IsUnique();
+                    b.HasIndex("TradesManJobResponseId");
 
                     b.ToTable("Jobs");
                 });
@@ -337,11 +338,19 @@ namespace Registry.Migrations
 
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
-                    b.HasOne("Registry.Models.TradesManJobResponse", "TradesManJobResponse")
-                        .WithOne()
-                        .HasForeignKey("Registry.Models.Job", "TradesManJobResponseId")
+                    b.HasOne("Registry.Models.ClientJobRequest", "JobRequest")
+                        .WithMany()
+                        .HasForeignKey("Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Registry.Models.TradesManJobResponse", "TradesManJobResponse")
+                        .WithMany()
+                        .HasForeignKey("TradesManJobResponseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("JobRequest");
 
                     b.Navigation("TradesManJobResponse");
                 });

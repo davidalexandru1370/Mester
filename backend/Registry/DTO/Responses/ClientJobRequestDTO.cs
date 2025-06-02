@@ -11,5 +11,6 @@
         public required bool Open { get; set; }
         public required List<string> ImagesUrl { get; set; }
         public required Guid? JobApprovedId { get; set; }
+        public required ConversationUserDTO Client { get; set; }
     }
 }

@@ -24,7 +24,7 @@ namespace Registry
                 Id = conversation.Id,
                 ClientRequest = conversation.Request.ToClientJobRequestDTO(),
                 TradesMan = conversation.TradesMan.ToConversationUserDTO(),
-                LastMessage = last
+                LastMessage = last,
             };
         }
 
@@ -53,8 +53,8 @@ namespace Registry
         {
             return new MessageOrResponsesDTO
             {
-                IsMe = response.TradesManId == currentUser,
-                ClientRequestResponse = response.ToTradesManJobResponseDTO(),
+                IsMe = response.Conversation.TradesManId == currentUser,
+                Response = response.ToTradesManJobResponseDTO(),
                 Seen = response.Seen,
                 Sent = response.Sent,
             };
@@ -73,7 +73,8 @@ namespace Registry
                 ShowToEveryone = request.ShowToEveryone,
                 // TODO: add support for images
                 ImagesUrl = new(),
-                StartDate = request.StartDate
+                StartDate = request.StartDate,
+                Client = request.InitiatedBy.ToConversationUserDTO()
             };
         }
 
