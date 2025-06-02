@@ -15,6 +15,7 @@ namespace Registry.Repository
 
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Job> Jobs { get; set; }
+        public virtual DbSet<Bill> Bills { get; set; }
         public virtual DbSet<Review> Reviews { get; set; }
         public virtual DbSet<Speciality> Specialties { get; set; }
         public virtual DbSet<TradesManSpecialities> TradesManSpecialities { get; set; }
@@ -59,7 +60,7 @@ namespace Registry.Repository
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.JobApproved).WithOne();
             modelBuilder.Entity<ClientJobRequest>().HasOne(x => x.InitiatedBy).WithMany().OnDelete(DeleteBehavior.Restrict);
 
-
+            modelBuilder.Entity<Bill>().Property(b => b.Amount).HasPrecision(18, 2);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

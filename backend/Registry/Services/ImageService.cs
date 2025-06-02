@@ -17,13 +17,12 @@ public class ImageService : IImageService
 
     }
 
-    public async Task<string> UploadImage(IFormFile destinationImage)
+    public async Task<string> UploadImage(Stream destinationImage, CancellationToken token = default)
     {
         var auth = new FirebaseAuthProvider(new FirebaseConfig(ApiKey));
         var a = await auth.SignInWithEmailAndPasswordAsync(AuthEmail, AuthPassword);
 
-        var cancellation = new CancellationTokenSource();
-        await using var stream = destinationImage.OpenReadStream();
+        await using var stream = destinationImage;
 
         var task = new FirebaseStorage(
                 Bucket,
@@ -34,7 +33,7 @@ public class ImageService : IImageService
                         true // when you cancel the upload, exception is thrown. By default no exception is thrown
                 })
             .Child(Guid.NewGuid().ToString())
-            .PutAsync(stream, cancellation.Token);
+            .PutAsync(stream, token);
 
         task.Progress.ProgressChanged += (s, e) => Console.WriteLine($"Progress: {e.Percentage} %");
 

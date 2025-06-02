@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Registry.DTO.Requests;
+using Registry.DTO.Responses;
 using Registry.Services.Interfaces;
 
 namespace Registry.Controllers
@@ -16,6 +19,16 @@ namespace Registry.Controllers
             _serviceTradesMan = service;
             _userService = userService;
             _serviceJobs = serviceJobs;
+        }
+
+
+        [Authorize]
+        [HttpPost("{jobId}/bills")]
+        public async Task<IActionResult> AddBill(Guid jobId, CreateBillRequest bill)
+        {
+            var tradesMan = await _userService.GetTradesManByClaims(User);
+            BillDTO b = await _serviceJobs.AddBill(tradesMan, jobId, bill);
+            return Ok(b);
         }
     }
 }

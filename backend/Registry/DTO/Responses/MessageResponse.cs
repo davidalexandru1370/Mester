@@ -3,6 +3,7 @@
     public class MessageResponse
     {
         public required Guid Id { get; set; }
+        public required bool IsMe { get; set; }
         public required string Text { get; set; }
     }
 }

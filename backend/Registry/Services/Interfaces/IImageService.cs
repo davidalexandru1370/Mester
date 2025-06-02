@@ -2,5 +2,5 @@
 
 public interface IImageService
 {
-    public Task<string> UploadImage(IFormFile destinationImage);
+    public Task<string> UploadImage(Stream destinationImage, CancellationToken token = default);
 }

@@ -7,6 +7,7 @@ using Registry.Errors.Services;
 using Registry.Models;
 using Registry.Repository;
 using Registry.Services.Interfaces;
+using Registry.utils;
 
 namespace Registry.Services
 {
@@ -14,10 +15,11 @@ namespace Registry.Services
     {
         // A bit lazy to create repo for everything...should we use just the context?
         private readonly TradesManDbContext _context;
-
-        public JobsService(TradesManDbContext context)
+        private readonly ImageService _imageService;
+        public JobsService(TradesManDbContext context, ImageService imageService)
         {
             _context = context;
+            _imageService = imageService;
         }
 
         public async Task<List<ConversationDTO>> GetConversations(User user)
@@ -25,6 +27,9 @@ namespace Registry.Services
             var r = await _context.Conversations
                 .Include(c => c.Request)
                 .ThenInclude(r => r.InitiatedBy)
+                .Include(c => c.Request)
+                .ThenInclude(c => c.JobApproved)
+                .ThenInclude(c => c.Bills)
                 .Include(c => c.TradesMan)
                 .Include(c => c.Messages)
                 .Where(c => c.Request.InitiatedById == user.Id || c.TradesMan.Id == user.Id)
@@ -33,29 +38,38 @@ namespace Registry.Services
 
             r.Sort((a, b) =>
             {
-                if (a.LastMessage is null && b.LastMessage is null) return 0;
-                if (a.LastMessage is null) return -1;
-                if (b.LastMessage is null) return 1;
-                return -a.LastMessage.Sent.CompareTo(b.LastMessage.Sent);
+                var aLastMessageTime = a.ClientRequest.RequestedOn;
+                if (a.LastMessage is not null && a.LastMessage.Sent > aLastMessageTime) aLastMessageTime = a.LastMessage.Sent;
+
+                var bLastMessageTime = b.ClientRequest.RequestedOn;
+                if (b.LastMessage is not null && b.LastMessage.Sent > aLastMessageTime) bLastMessageTime = b.LastMessage.Sent;
+
+                return -aLastMessageTime.CompareTo(bLastMessageTime);
             });
 
             return r;
         }
 
-        public async Task<List<MessageOrResponsesDTO>> GetMessages(User user, Guid conversationId)
+        public async Task<List<MessageOrResponsesOrBillDTO>> GetMessages(User user, Guid conversationId)
         {
             var conversation = await _context.Conversations
                 .Include(c => c.Messages)
                 .Include(c => c.Request)
+                .ThenInclude(c => c.JobApproved)
+                .ThenInclude(c => c!.Bills)
                 .Include(c => c.Responses)
                 .Include(c => c.TradesMan)
                 // the second if is only used to make sure the user doesn't get messages from another user
                 .Where(c => c.Id == conversationId && (c.Request.InitiatedById == user.Id || c.TradesMan.Id == user.Id))
                 .FirstOrDefaultAsync() ?? throw new NotFoundException();
-
-            return conversation.Messages
+            var r = conversation.Messages
                 .Select(m => m.ToMessageAndResponseDTO(user.Id))
-                .Union(conversation.Responses.Select(r => r.ToMessageAndResponseDTO(user.Id)))
+                .Union(conversation.Responses.Select(r => r.ToMessageAndResponseDTO()));
+            if (conversation.Request.JobApproved is not null)
+            {
+                r = r.Union(conversation.Request.JobApproved.Bills.Select(b => b.ToMessageAndResponseDTO()));
+            }
+            return r
                 .OrderBy(r => r.Sent)
                 .ToList();
         }
@@ -83,6 +97,8 @@ namespace Registry.Services
                 .Include(c => c.Responses)
                 .Include(c => c.Request)
                 .ThenInclude(c => c.InitiatedBy)
+                .Include(c => c.Request)
+                .ThenInclude(c => c.JobApproved)
                 .FirstOrDefaultAsync(c => c.Request.Id == clientJobRequestId && c.TradesMan.Id == tradesMan.Id);
 
             if (conversation is not null)
@@ -115,7 +131,7 @@ namespace Registry.Services
                 InitiatedById = user.Id,
                 InitiatedBy = user,
             };
-            await _context.ClientRequests.AddAsync(jobRequest);
+            var entity = await _context.ClientRequests.AddAsync(jobRequest);
             await _context.SaveChangesAsync();
             return jobRequest.ToClientJobRequestDTO();
         }
@@ -127,12 +143,16 @@ namespace Registry.Services
             {
                 throw new ConflictException("Conversation already exists");
             }
-            var request = await _context.ClientRequests.Include(r => r.InitiatedBy).FirstOrDefaultAsync(r => r.Id == clientRequestId) ?? throw new NotFoundException("The client request id was not found");
+            var request = await _context.ClientRequests
+                .Include(r => r.InitiatedBy)
+                .Include(r => r.JobApproved)
+                .FirstOrDefaultAsync(r => r.Id == clientRequestId) ?? throw new NotFoundException("The client request id was not found");
             var conversation = new Conversation
             {
                 RequestId = clientRequestId,
                 Request = request,
                 TradesManId = tradesManId,
+
             };
             await _context.Conversations.AddAsync(conversation);
             await _context.SaveChangesAsync();
@@ -141,7 +161,7 @@ namespace Registry.Services
 
         public async Task<ClientJobRequestDTO> UpdateClientRequest(User user, Guid clientRequestId, UpdateClientJobRequest request)
         {
-            var r = await _context.ClientRequests.FirstOrDefaultAsync(r => r.Id == clientRequestId && r.InitiatedById == user.Id) ?? throw new NotFoundException();
+            var r = await _context.ClientRequests.Include(r => r.JobApproved).FirstOrDefaultAsync(r => r.Id == clientRequestId && r.InitiatedById == user.Id) ?? throw new NotFoundException();
             if (request.Title is not null) r.Title = request.Title;
             if (request.Description is not null) r.Description = request.Description;
             if (request.ShowToEveryone is not null) r.ShowToEveryone = request.ShowToEveryone.Value;
@@ -212,13 +232,12 @@ namespace Registry.Services
 
         public async Task<List<ClientJobRequestDTO>> AllClientRequests(User user)
         {
-            var requests = _context.ClientRequests.Include(r => r.InitiatedBy).Where(r => r.InitiatedById == user.Id).AsAsyncEnumerable();
-            var r = new List<ClientJobRequestDTO>();
-            await foreach (var request in requests)
-            {
-                r.Add(request.ToClientJobRequestDTO());
-            }
-            return r;
+            return await _context.ClientRequests
+                .Include(r => r.JobApproved)
+                .Include(r => r.InitiatedBy)
+                .Where(r => r.InitiatedById == user.Id)
+                .Select(r => r.ToClientJobRequestDTO())
+                .ToListAsync();
         }
 
         public async Task<List<ConversationWithLastOfferDTO>> GetConversationsLastOffer(User user, Guid jobRequestDetails)
@@ -249,11 +268,31 @@ namespace Registry.Services
             var exceptListIds = await _context.Conversations.Where(c => c.TradesManId == tradesMan.Id).Select(r => r.RequestId).ToListAsync();
             return await _context.ClientRequests
                 .Include(r => r.InitiatedBy)
+                .Include(r => r.JobApproved)
                 .Where(r => r.JobApprovedId == null && r.ShowToEveryone)
                 .OrderBy(r => r.RequestedOn)
                 .Where(r => !exceptListIds.Contains(r.Id))
                 .Select(v => v.ToClientJobRequestDTO())
                 .ToListAsync();
+        }
+
+        public async Task<BillDTO> AddBill(User tradesMan, Guid jobId, CreateBillRequest billRequest)
+        {
+            var job = await _context.Jobs
+                .Include(j => j.TradesManJobResponse)
+                .ThenInclude(r => r.Conversation)
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.TradesManJobResponse.Conversation.TradesManId == tradesMan.Id) ?? throw new NotFoundException();
+            string url = await _imageService.UploadImage(new Base64Stream(billRequest.BillImageBase64).AsStream());
+            var bill = new Bill
+            {
+                Amount = billRequest.Amount,
+                Description = billRequest.Description,
+                JobId = jobId,
+                BillImage = url
+            };
+            await _context.Bills.AddAsync(bill);
+            await _context.SaveChangesAsync();
+            return bill.ToBillDTO();
         }
     }
 }

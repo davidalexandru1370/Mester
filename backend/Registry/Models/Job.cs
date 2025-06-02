@@ -10,4 +10,6 @@ public class Job
     public required Guid TradesManJobResponseId { get; set; }
     public DateTime StartDate { get; set; } = DateTime.Now;
     public DateTime? EndDate { get; set; }
+
+    public List<Bill> Bills { get; set; } = new();
 }

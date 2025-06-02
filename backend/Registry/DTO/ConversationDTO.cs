@@ -7,6 +7,6 @@ namespace Registry.DTO
         public required Guid Id { get; set; }
         public required ClientJobRequestDTO ClientRequest { get; set; }
         public required ConversationUserDTO TradesMan { get; set; }
-        public required MessageOrResponsesDTO? LastMessage { get; set; }
+        public required MessageOrResponsesOrBillDTO? LastMessage { get; set; }
     }
 }
