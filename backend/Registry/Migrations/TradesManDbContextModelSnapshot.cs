@@ -32,6 +32,10 @@ namespace Registry.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.PrimitiveCollection<string>("ImagesUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("InitiatedById")
                         .HasColumnType("uniqueidentifier");
 
@@ -62,7 +66,7 @@ namespace Registry.Migrations
                         .IsUnique()
                         .HasFilter("[JobApprovedId] IS NOT NULL");
 
-                    b.ToTable("ClientRequests", (string)null);
+                    b.ToTable("ClientRequests");
                 });
 
             modelBuilder.Entity("Registry.Models.Conversation", b =>
@@ -110,7 +114,7 @@ namespace Registry.Migrations
                     b.HasIndex("TradesManJobResponseId")
                         .IsUnique();
 
-                    b.ToTable("Jobs", (string)null);
+                    b.ToTable("Jobs");
                 });
 
             modelBuilder.Entity("Registry.Models.Message", b =>
@@ -141,7 +145,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("FromId");
 
-                    b.ToTable("Messages", (string)null);
+                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("Registry.Models.Review", b =>
@@ -164,7 +168,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("JobId");
 
-                    b.ToTable("Reviews", (string)null);
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("Registry.Models.Speciality", b =>
@@ -186,7 +190,7 @@ namespace Registry.Migrations
                     b.HasIndex("Type")
                         .IsUnique();
 
-                    b.ToTable("Specialties", (string)null);
+                    b.ToTable("Specialties");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
@@ -208,7 +212,7 @@ namespace Registry.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TradesMan", (string)null);
+                    b.ToTable("TradesMan");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManImages", b =>
@@ -228,7 +232,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("TradesmanId");
 
-                    b.ToTable("TradesManImages", (string)null);
+                    b.ToTable("TradesManImages");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManJobResponse", b =>
@@ -279,7 +283,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("SpecialityId");
 
-                    b.ToTable("TradesManSpecialities", (string)null);
+                    b.ToTable("TradesManSpecialities");
                 });
 
             modelBuilder.Entity("Registry.Models.User", b =>
@@ -317,7 +321,7 @@ namespace Registry.Migrations
                         .IsUnique()
                         .HasFilter("[Email] IS NOT NULL");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Registry.Models.ClientJobRequest", b =>

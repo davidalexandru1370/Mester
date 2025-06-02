@@ -6,11 +6,15 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Registry.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTradesManImages : Migration
+    public partial class AddedTradesmanImages : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_Users_Email",
+                table: "Users");
+
             migrationBuilder.CreateTable(
                 name: "TradesManImages",
                 columns: table => new
@@ -31,6 +35,13 @@ namespace Registry.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true,
+                filter: "[Email] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TradesManImages_TradesmanId",
                 table: "TradesManImages",
                 column: "TradesmanId");
@@ -41,6 +52,16 @@ namespace Registry.Migrations
         {
             migrationBuilder.DropTable(
                 name: "TradesManImages");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Users_Email",
+                table: "Users");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true);
         }
     }
 }
