@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, } from "reactstrap";
-import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestWithoutId, createRequest, findTradesMan, FindTradesMan, updateRequest } from "@/api";
+import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestCreateOrUpdate, createRequest, findTradesMan, FindTradesMan, updateRequest } from "@/api";
 import { Dialog, DialogContent, } from "../ui/dialog";
 import { Plus } from "lucide-react";
 import RequestDetails from "./RequestDetails";
@@ -46,6 +46,7 @@ export default function () {
             } catch (error) {
                 if (error instanceof ApiError) {
                     if (error.error.type !== "aborted") {
+                        console.log(error);
                         toast.error(`${error.message}`);
                     }
                     return;
@@ -72,6 +73,7 @@ export default function () {
             catch (error) {
                 if (error instanceof ApiError) {
                     if (error.error.type !== "aborted") {
+                        console.log(error);
                         toast.error(`${error.message}`);
                     }
                     return;
@@ -102,23 +104,34 @@ export default function () {
         // })();
     }
 
-    const createOrUpdateRequest = async (request: ClientJobRequestWithoutId) => {
+    const createOrUpdateRequest = async (request: ClientJobRequestCreateOrUpdate) => {
         setDisableUpdateButton(true);
         try {
             if (request.id) {
                 // Just why, typescript?
-                await updateRequest({ ...request, id: request.id }, token);
-                setClientRequests([...clientRequests])
-                toast("Request updated successfully.");
+                const updatedResponse = await updateRequest({ ...request, id: request.id }, token);
+                let response = clientRequests.map(r => {
+                    if (r.id === updatedResponse.id) {
+                        return updatedResponse;
+                    } else {
+                        return r
+                    }
+                });
+                setClientRequests(response);
+                toast.success("Request updated successfully.");
             } else {
                 const r = await createRequest(request, token);
                 setClientRequests([r, ...clientRequests])
-                toast("Request created successfully.");
+                toast.success("Request created successfully.");
             }
         } catch (error) {
             if (error instanceof ApiError) {
-                toast.error(`${error.message}`);
+                if (error.error.type !== "aborted") {
+                    console.log(error.error);
+                    toast.error(`${error.message}`);
+                }
             } else {
+                console.log("Unexpected error:", error);
                 toast.error("An unexpected error occurred.");
             }
             return;
@@ -129,10 +142,11 @@ export default function () {
     return (
         <div>
             <NavMenu />
+            <ToastContainer />
             <div className="flex h-screen bg-gray-100">
                 {/* Conversations List */}
                 <div className="w-1/3 border-r bg-white p-4 overflow-y-auto">
-                    <Button size="icon" variant="outline" onClick={() => setDialogOpen(true)}>
+                    <Button size="icon" variant="outline" onClick={() => setDialogOpen(true)} style={{ marginBottom: 10, }}>
                         <Plus className="w-5 h-5" />
                     </Button>
                     {clientRequests.map((request) => (

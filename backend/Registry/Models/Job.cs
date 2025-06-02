@@ -1,11 +1,13 @@
 ﻿namespace Registry.Models;
 
+
+// There is something weird going on between Response, Conversation, Request and Job.
+// I don't think this table is normalized
 public class Job
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public required ClientJobRequest JobRequest { get; set; }
-    public required TradesManJobResponse TradesManJobResponse { get; set; }
-
-    public required DateTime StartDate { get; set; }
+    public TradesManJobResponse TradesManJobResponse { get; set; } = default!;
+    public required Guid TradesManJobResponseId { get; set; }
+    public DateTime StartDate { get; set; } = DateTime.Now;
     public DateTime? EndDate { get; set; }
 }

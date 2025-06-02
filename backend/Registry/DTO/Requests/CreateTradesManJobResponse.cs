@@ -2,7 +2,6 @@
 {
     public class CreateTradesManJobResponse
     {
-        public required Guid ClientJobRequest { get; set; }
         public required decimal WorkmanShipAmount { get; set; }
         public required DateTime AproximationEndDate { get; set; }
     }

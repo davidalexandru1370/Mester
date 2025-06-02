@@ -16,5 +16,7 @@
         public Guid? JobApprovedId { get; set; }
         // sets whether this job request is open by the user. This flag no longer in relevant when the job is approved
         public bool Open { get; set; } = true;
+
+
     }
 }

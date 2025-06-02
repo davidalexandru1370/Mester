@@ -40,6 +40,22 @@ public class UserService : IUserService
         return user;
     }
 
+    public async Task<User> GetTradesManByClaims(ClaimsPrincipal claims)
+    {
+        var email = claims.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value ?? throw new UnauthorizedException();
+        var user = await _repoUsers.FindByEmail(email) ?? throw new UnauthorizedException();
+        if (user?.TradesManProfile is null) throw new UnauthorizedException();
+        return user;
+    }
+
+    public async Task<User> GetClientByClaims(ClaimsPrincipal claims)
+    {
+        var email = claims.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value ?? throw new UnauthorizedException();
+        var user = await _repoUsers.FindByEmail(email) ?? throw new UnauthorizedException();
+        if (user.TradesManProfile is not null) throw new UnauthorizedException();
+        return user;
+    }
+
     public TokenResponse CreateToken(TokenRegistrationRequest request)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -170,4 +186,6 @@ public class UserService : IUserService
             ImageUrl = imageUploadUrl,
         };
     }
+
+
 }

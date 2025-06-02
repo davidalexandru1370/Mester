@@ -7,7 +7,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./src/*"],
-      "@libs/*": ["./src/lib/*"]
+      "@libs/*": ["./src/lib/*"],
+      "@radix-ui/*": ["./node_modules/@radix-ui/*"]
     }
   }
 }

@@ -130,7 +130,7 @@ export interface Message {
     text: string
 }
 
-export interface ClientJobRequestWithoutId {
+export interface ClientJobRequestCreateOrUpdate {
     id?: string;
     requestedOn: string;
     startDate?: string;
@@ -152,38 +152,24 @@ export interface ClientJobRequest {
     open: boolean;
     imagesUrl: string[];
     jobApprovedId?: string;
+    client: ConversationUser
 }
 
-interface MessageOrResponseApi {
-    isMe: boolean;
-    message?: Message;
-    response?: TradesManJobResponse;
-}
+export type MessageOrResponse = { isMe: boolean, sent: string, seen?: string } & ({ message: Message, response: undefined } | { response: TradesManJobResponse, message: undefined });
 
-export type MessageOrResponse = MessageOnly | ResponseOnly;
-
-export interface MessageOnly extends Message {
-    type: "message";
-    isMe: boolean;
-}
-
-export interface ResponseOnly extends TradesManJobResponse {
-    type: "response";
-    isMe: boolean;
-}
 
 export interface Conversation {
     id: string;
     clientRequest: ClientJobRequest;
     tradesMan: ConversationUser;
-    lastMessage: MessageOrResponse;
+    lastMessage?: MessageOrResponse;
 }
 
 export async function getConversations(token: string, signal?: AbortSignal): Promise<Conversation[]> {
     try {
         const response = await axios
             .get(
-                `${BASE_URL}/api/Conversations`,
+                `${BASE_URL}/api/Conversation`,
                 {
                     timeout: 5000,
                     headers: {
@@ -199,29 +185,31 @@ export async function getConversations(token: string, signal?: AbortSignal): Pro
     }
 }
 
-function convertMessageOrResponse(data: MessageOrResponseApi): MessageOrResponse {
-    if (data.message) {
-        return {
-            type: "message",
-            isMe: data.isMe,
-            ...data.message
-        };
+export async function getGlobalRequests(token: string, signal?: AbortSignal): Promise<ClientJobRequest[]> {
+    try {
+        const response = await axios
+            .get(
+                `${BASE_URL}/api/Requests/global`,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                }
+            );
+        return response.data as ClientJobRequest[];
     }
-    if (data.response) {
-        return {
-            type: "response",
-            isMe: data.isMe,
-            ...data.response
-        };
+    catch (e) {
+        throw new ApiError(convertError(e))
     }
-    throw new Error("Invalid data format");
 }
 
 export async function getMessages(conversationId: string, token: string, signal?: AbortSignal): Promise<MessageOrResponse[]> {
     try {
         const response = await axios
             .get(
-                `${BASE_URL}/api/Conversations/${conversationId}`,
+                `${BASE_URL}/api/Conversation/${conversationId}`,
                 {
                     timeout: 5000,
                     headers: {
@@ -230,8 +218,8 @@ export async function getMessages(conversationId: string, token: string, signal?
                     signal
                 },
             );
-        let data = response.data as MessageOrResponseApi[];
-        return data.map(convertMessageOrResponse);
+        console.log(response.data);
+        return response.data as MessageOrResponse[];
     }
     catch (e) {
         throw new ApiError(convertError(e))
@@ -288,16 +276,11 @@ export async function sendClientRequestToConversation(clientRequest: string, tra
 
 }
 
-export async function getConversation(props: {
-    clientJobRequestId: string,
-    tradesManId: string
-},
-    token: string, signal?: AbortSignal): Promise<Conversation> {
-    const { clientJobRequestId, tradesManId } = props;
+export async function getConversation(clientJobRequestId: string, token: string, signal?: AbortSignal): Promise<Conversation> {
     try {
         const response = await axios
             .put(
-                `${BASE_URL}/api/Conversations/jobRequests/${clientJobRequestId}/tradesmen/${tradesManId}`,
+                `${BASE_URL}/api/Conversation/jobRequests/${clientJobRequestId}`,
                 undefined,
                 {
                     timeout: 5000,
@@ -329,7 +312,7 @@ export async function sendMessage(params: {
     try {
         const response = await axios
             .post(
-                `${BASE_URL}/api/Conversations/${conversationId}/Send`,
+                `${BASE_URL}/api/Conversation/${conversationId}/Send`,
                 {
                     text: text
                 },
@@ -398,13 +381,15 @@ export async function clientGetRequestsConversations(requestId: string, token: s
 
 interface TradesManJobResponse {
     id: string;
-    clientJobRequestId: string;
+    sent: string;
+    seen?: string;
+    conversationId: string;
     workmanshipAmount: number;
-    AproximationEndDate: string;
+    aproximationEndDate: string;
 }
 
 
-export async function createRequest(params: ClientJobRequestWithoutId, token: string, signal?: AbortSignal): Promise<ClientJobRequest> {
+export async function createRequest(params: ClientJobRequestCreateOrUpdate, token: string, signal?: AbortSignal): Promise<ClientJobRequest> {
     try {
         const response = await axios
             .post(
@@ -425,7 +410,11 @@ export async function createRequest(params: ClientJobRequestWithoutId, token: st
     }
 }
 
-export async function updateRequest(params: ClientJobRequest, token: string, signal?: AbortSignal): Promise<ClientJobRequest> {
+export interface ClientJobRequestUpdate extends ClientJobRequestCreateOrUpdate {
+    id: string;
+}
+
+export async function updateRequest(params: ClientJobRequestUpdate, token: string, signal?: AbortSignal): Promise<ClientJobRequest> {
     try {
         const response = await axios
             .patch(
@@ -440,6 +429,58 @@ export async function updateRequest(params: ClientJobRequest, token: string, sig
                 },
             );
         return response.data as ClientJobRequest;
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}
+
+
+
+
+export async function createTradesManJobResponse(params: {
+    conversationId: string,
+    workmanShipAmount: number,
+    aproximationEndDate: string,
+}, token: string, signal?: AbortSignal): Promise<TradesManJobResponse> {
+    try {
+        const response = await axios
+            .post(
+                `${BASE_URL}/api/Conversation/${params.conversationId}/responses`,
+                {
+                    workmanshipAmount: params.workmanShipAmount,
+                    aproximationEndDate: params.aproximationEndDate
+                },
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
+        return response.data as TradesManJobResponse;
+    }
+    catch (e) {
+        throw new ApiError(convertError(e))
+    }
+}
+
+
+export async function acceptTradesManJobResponse(responseId: string, token: string, signal?: AbortSignal): Promise<undefined> {
+    try {
+        await axios
+            .patch(
+                `${BASE_URL}/api/Response/${responseId}/accept`,
+                undefined,
+                {
+                    timeout: 5000,
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                    signal
+                },
+            );
     }
     catch (e) {
         throw new ApiError(convertError(e))

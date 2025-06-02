@@ -11,6 +11,7 @@ import Col from "react-bootstrap/Col";
 export default function () {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [userDetails, setUserDetails] = useState<UserDetailsDto | null>(null);
+  const [tradesmanShower, setTradesmanShower] = useState(false);
   const { token, setToken } = useToken();
   const [specialities, setSpecialities] = useState<any>([]);
   const [addedSpecialities, setAddedSpecialities] = useState<any>([]);

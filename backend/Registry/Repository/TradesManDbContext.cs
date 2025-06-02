@@ -28,12 +28,9 @@ namespace Registry.Repository
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Job>()
-                .HasOne(x => x.JobRequest)
-                .WithMany().OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<Job>()
                 .HasOne(x => x.TradesManJobResponse)
-                .WithMany().OnDelete(DeleteBehavior.Restrict);
+                .WithOne()
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<User>()
                 .HasOne(x => x.TradesManProfile)
@@ -51,6 +48,8 @@ namespace Registry.Repository
 
             modelBuilder.Entity<Conversation>().HasOne(x => x.Request).WithMany().OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Conversation>().HasOne(x => x.TradesMan).WithMany().OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Conversation>().HasIndex(c => new { c.RequestId, c.TradesManId }).IsUnique();
+
             modelBuilder.Entity<TradesManSpecialities>()
                 .HasKey(e => new { e.TradesManId, e.SpecialityId });
 

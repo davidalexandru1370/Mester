@@ -82,16 +82,18 @@ namespace Registry.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RequestId");
-
                     b.HasIndex("TradesManId");
 
-                    b.ToTable("Conversations", (string)null);
+                    b.HasIndex("RequestId", "TradesManId")
+                        .IsUnique();
+
+                    b.ToTable("Conversations");
                 });
 
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("EndDate")
@@ -105,7 +107,8 @@ namespace Registry.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TradesManJobResponseId");
+                    b.HasIndex("TradesManJobResponseId")
+                        .IsUnique();
 
                     b.ToTable("Jobs", (string)null);
                 });
@@ -237,10 +240,7 @@ namespace Registry.Migrations
                     b.Property<DateTime>("AproximationEndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("ClientJobRequestId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ConversationId")
+                    b.Property<Guid>("ConversationId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("Seen")
@@ -249,22 +249,15 @@ namespace Registry.Migrations
                     b.Property<DateTime>("Sent")
                         .HasColumnType("datetime2");
 
-                    b.Property<Guid>("TradesManId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<decimal>("WorkmanshipAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientJobRequestId");
-
                     b.HasIndex("ConversationId");
 
-                    b.HasIndex("TradesManId");
-
-                    b.ToTable("TradesManJobResponses", (string)null);
+                    b.ToTable("TradesManJobResponses");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManSpecialities", b =>
@@ -365,19 +358,11 @@ namespace Registry.Migrations
 
             modelBuilder.Entity("Registry.Models.Job", b =>
                 {
-                    b.HasOne("Registry.Models.ClientJobRequest", "JobRequest")
-                        .WithMany()
-                        .HasForeignKey("Id")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("Registry.Models.TradesManJobResponse", "TradesManJobResponse")
-                        .WithMany()
-                        .HasForeignKey("TradesManJobResponseId")
+                        .WithOne()
+                        .HasForeignKey("Registry.Models.Job", "TradesManJobResponseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("JobRequest");
 
                     b.Navigation("TradesManJobResponse");
                 });
@@ -434,25 +419,13 @@ namespace Registry.Migrations
 
             modelBuilder.Entity("Registry.Models.TradesManJobResponse", b =>
                 {
-                    b.HasOne("Registry.Models.ClientJobRequest", "ClientJobRequest")
-                        .WithMany()
-                        .HasForeignKey("ClientJobRequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Registry.Models.Conversation", null)
+                    b.HasOne("Registry.Models.Conversation", "Conversation")
                         .WithMany("Responses")
-                        .HasForeignKey("ConversationId");
-
-                    b.HasOne("Registry.Models.User", "TradesMan")
-                        .WithMany()
-                        .HasForeignKey("TradesManId")
+                        .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ClientJobRequest");
-
-                    b.Navigation("TradesMan");
+                    b.Navigation("Conversation");
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManSpecialities", b =>

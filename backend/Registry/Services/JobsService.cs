@@ -22,42 +22,47 @@ namespace Registry.Services
 
         public async Task<List<ConversationDTO>> GetConversations(User user)
         {
-            var r = _context.Conversations
+            var r = await _context.Conversations
                 .Include(c => c.Request)
+                .ThenInclude(r => r.InitiatedBy)
                 .Include(c => c.TradesMan)
                 .Include(c => c.Messages)
                 .Where(c => c.Request.InitiatedById == user.Id || c.TradesMan.Id == user.Id)
-                .AsAsyncEnumerable();
-            List<ConversationDTO> conversations = [];
-            await foreach (var c in r)
+                .Select(c => c.ToConversationDTO(user.Id))
+                .ToListAsync();
+
+            r.Sort((a, b) =>
             {
-                var dto = c.ToConversationDTO(user.Id);
-                if (dto.LastMessage is null) continue;
-                conversations.Add(dto);
-            }
-            return conversations;
+                if (a.LastMessage is null && b.LastMessage is null) return 0;
+                if (a.LastMessage is null) return -1;
+                if (b.LastMessage is null) return 1;
+                return -a.LastMessage.Sent.CompareTo(b.LastMessage.Sent);
+            });
+
+            return r;
         }
 
-        public async Task<List<MessageOrResponsesDTO>?> GetMessages(User user, Guid conversationId)
+        public async Task<List<MessageOrResponsesDTO>> GetMessages(User user, Guid conversationId)
         {
             var conversation = await _context.Conversations
                 .Include(c => c.Messages)
                 .Include(c => c.Request)
+                .Include(c => c.Responses)
                 .Include(c => c.TradesMan)
                 // the second if is only used to make sure the user doesn't get messages from another user
                 .Where(c => c.Id == conversationId && (c.Request.InitiatedById == user.Id || c.TradesMan.Id == user.Id))
-                .FirstOrDefaultAsync();
-            if (conversation is null) return null;
+                .FirstOrDefaultAsync() ?? throw new NotFoundException();
 
             return conversation.Messages
                 .Select(m => m.ToMessageAndResponseDTO(user.Id))
                 .Union(conversation.Responses.Select(r => r.ToMessageAndResponseDTO(user.Id)))
+                .OrderBy(r => r.Sent)
                 .ToList();
         }
 
         public async Task<SendMessageResponse> SendMessage(User user, Guid conversationId, SendMessageRequest sendMessage)
         {
-            var conversation = await _context.Conversations.FindAsync(conversationId) ?? throw new ServiceException("Conversation was not found");
+            var conversation = await _context.Conversations.FirstOrDefaultAsync(c => c.Id == conversationId) ?? throw new ServiceException("Conversation was not found");
             var message = new Message
             {
                 FromId = user.Id,
@@ -76,25 +81,30 @@ namespace Registry.Services
             var conversation = await _context.Conversations
                 .Include(c => c.Messages)
                 .Include(c => c.Responses)
+                .Include(c => c.Request)
+                .ThenInclude(c => c.InitiatedBy)
                 .FirstOrDefaultAsync(c => c.Request.Id == clientJobRequestId && c.TradesMan.Id == tradesMan.Id);
 
             if (conversation is not null)
             {
                 return conversation.ToConversationDTO(tradesMan.Id);
             }
-            var request = await _context.ClientRequests.FirstOrDefaultAsync(r => r.Id == clientJobRequestId) ?? throw new ServiceException("Invalid client job request id");
+            var request = await _context.ClientRequests
+                .Include(r => r.InitiatedBy)
+                .FirstOrDefaultAsync(r => r.Id == clientJobRequestId) ?? throw new ServiceException("Invalid client job request id");
             var c = new Conversation
             {
                 RequestId = request.Id,
                 TradesManId = tradesMan.Id,
-                TradesMan = tradesMan
+                TradesMan = tradesMan,
+                Request = request,
             };
-            await _context.Conversations.AddAsync(c);
+            var r = await _context.Conversations.AddAsync(c);
             await _context.SaveChangesAsync();
-            return c.ToConversationDTO(tradesMan.Id);
+            return r.Entity.ToConversationDTO(tradesMan.Id);
         }
 
-        public async Task<Guid> CreateClientRequest(User user, CreateClientJobRequest request)
+        public async Task<ClientJobRequestDTO> CreateClientRequest(User user, CreateClientJobRequest request)
         {
             var jobRequest = new ClientJobRequest
             {
@@ -102,11 +112,12 @@ namespace Registry.Services
                 Description = request.Description,
                 ShowToEveryone = request.ShowToEveryone,
                 StartDate = request.StartDate,
-                InitiatedById = user.Id
+                InitiatedById = user.Id,
+                InitiatedBy = user,
             };
             await _context.ClientRequests.AddAsync(jobRequest);
             await _context.SaveChangesAsync();
-            return jobRequest.Id;
+            return jobRequest.ToClientJobRequestDTO();
         }
 
         public async Task<ConversationDTO> SendClientRequestToTradesMan(User client, Guid clientRequestId, Guid tradesManId)
@@ -116,9 +127,11 @@ namespace Registry.Services
             {
                 throw new ConflictException("Conversation already exists");
             }
+            var request = await _context.ClientRequests.Include(r => r.InitiatedBy).FirstOrDefaultAsync(r => r.Id == clientRequestId) ?? throw new NotFoundException("The client request id was not found");
             var conversation = new Conversation
             {
                 RequestId = clientRequestId,
+                Request = request,
                 TradesManId = tradesManId,
             };
             await _context.Conversations.AddAsync(conversation);
@@ -126,7 +139,7 @@ namespace Registry.Services
             return conversation.ToConversationDTO(client.Id);
         }
 
-        public async Task UpdateClientRequest(User user, Guid clientRequestId, UpdateClientJobRequest request)
+        public async Task<ClientJobRequestDTO> UpdateClientRequest(User user, Guid clientRequestId, UpdateClientJobRequest request)
         {
             var r = await _context.ClientRequests.FirstOrDefaultAsync(r => r.Id == clientRequestId && r.InitiatedById == user.Id) ?? throw new NotFoundException();
             if (request.Title is not null) r.Title = request.Title;
@@ -136,45 +149,49 @@ namespace Registry.Services
             if (request.IncludeStartDate ?? false) r.StartDate = request.StartDate;
             _context.ClientRequests.Update(r);
             await _context.SaveChangesAsync();
+            r.InitiatedBy = user;
+            return r.ToClientJobRequestDTO();
         }
 
-        public async Task<TradesManJobResponseDTO> AddTradesManJobResponse(User tradesMan, CreateTradesManJobResponse request)
+        public async Task<TradesManJobResponseDTO> AddTradesManJobResponse(User tradesMan, Guid conversationId, CreateTradesManJobResponse request)
         {
-            var clientJobRequest = await _context.ClientRequests.FirstOrDefaultAsync(r => r.Id == request.ClientJobRequest) ?? throw new NotFoundException();
-            if (!clientJobRequest.Open)
+            var conversation = await _context.Conversations.Include(c => c.Request).FirstOrDefaultAsync(c => c.Id == conversationId) ?? throw new NotFoundException();
+            if (!conversation.Request.Open)
             {
                 throw new ServiceException("The request is not open. It can't accept values");
             }
-            if (clientJobRequest.JobApprovedId.HasValue)
+            if (conversation.Request.JobApprovedId.HasValue)
             {
                 throw new ServiceException("The request is already approved");
             }
             // TODO: maybe we can add another check that this job is either open or the tradesman has a conversation with the user
             var jobResponse = new TradesManJobResponse
             {
-                ClientJobRequestId = clientJobRequest.Id,
-                ClientJobRequest = clientJobRequest,
+                ConversationId = conversationId,
+                Conversation = conversation,
                 AproximationEndDate = request.AproximationEndDate,
                 WorkmanshipAmount = request.WorkmanShipAmount,
-                TradesManId = tradesMan.Id,
             };
             _context.TradesManJobResponses.Add(jobResponse);
             await _context.SaveChangesAsync();
             return jobResponse.ToTradesManJobResponseDTO();
         }
 
-        public async Task AcceptResponse(User user, Guid requestId, Guid responseId)
+        public async Task AcceptResponse(User user, Guid responseId)
         {
-            var request = await _context.ClientRequests.FirstOrDefaultAsync(r => r.Id == requestId && r.InitiatedById == user.Id) ?? throw new NotFoundException();
-            var response = await _context.TradesManJobResponses.FirstOrDefaultAsync(r => r.Id == responseId) ?? throw new NotFoundException();
-
+            var response = await _context.TradesManJobResponses
+                .Include(r => r.Conversation)
+                .ThenInclude(c => c.Request)
+                .FirstOrDefaultAsync(r => r.Id == responseId && r.Conversation.Request.InitiatedById == user.Id) ?? throw new NotFoundException();
+            if (response.Conversation.Request.JobApprovedId.HasValue) throw new ConflictException("Request was already accepted");
             var job = new Job
             {
-                JobRequest = request,
                 StartDate = DateTime.Now,
-                TradesManJobResponse = response
+                TradesManJobResponse = response,
+                TradesManJobResponseId = responseId,
             };
             await _context.Jobs.AddAsync(job);
+            var request = response.Conversation.Request;
             request.JobApproved = job;
             request.JobApprovedId = job.Id;
             _context.ClientRequests.Update(request);
@@ -185,7 +202,8 @@ namespace Registry.Services
         {
             var r = await _context.Jobs
                 .Include(j => j.TradesManJobResponse)
-                .FirstOrDefaultAsync(j => j.Id == jobId && j.TradesManJobResponse.TradesManId == tradesMan.Id) ?? throw new NotFoundException();
+                .ThenInclude(r => r.Conversation)
+                .FirstOrDefaultAsync(j => j.Id == jobId && j.TradesManJobResponse.Conversation.TradesManId == tradesMan.Id) ?? throw new NotFoundException();
 
             r.EndDate = endDate;
             _context.Jobs.Update(r);
@@ -194,7 +212,7 @@ namespace Registry.Services
 
         public async Task<List<ClientJobRequestDTO>> AllClientRequests(User user)
         {
-            var requests = _context.ClientRequests.Where(r => r.InitiatedById == user.Id).AsAsyncEnumerable();
+            var requests = _context.ClientRequests.Include(r => r.InitiatedBy).Where(r => r.InitiatedById == user.Id).AsAsyncEnumerable();
             var r = new List<ClientJobRequestDTO>();
             await foreach (var request in requests)
             {
@@ -224,6 +242,18 @@ namespace Registry.Services
                 };
             }
             return conversationsDTO;
+        }
+
+        public async Task<List<ClientJobRequestDTO>> GetGlobalRequests(User tradesMan)
+        {
+            var exceptListIds = await _context.Conversations.Where(c => c.TradesManId == tradesMan.Id).Select(r => r.RequestId).ToListAsync();
+            return await _context.ClientRequests
+                .Include(r => r.InitiatedBy)
+                .Where(r => r.JobApprovedId == null && r.ShowToEveryone)
+                .OrderBy(r => r.RequestedOn)
+                .Where(r => !exceptListIds.Contains(r.Id))
+                .Select(v => v.ToClientJobRequestDTO())
+                .ToListAsync();
         }
     }
 }
