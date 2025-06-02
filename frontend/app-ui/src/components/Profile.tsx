@@ -3,7 +3,7 @@ import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import useToken from "./useToken";
 import { useEffect, useRef, useState } from "react";
-import { UserDetailsDto } from "@/context/UserContext";
+import { UserDetailsDto, useUser } from "@/context/UserContext";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
@@ -12,6 +12,7 @@ export default function () {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [userDetails, setUserDetails] = useState<UserDetailsDto | null>(null);
   // const [tradesmanShower, setTradesmanShower] = useState(false);
+  const { refetchUser } = useUser();
   const { token } = useToken();
   const [specialities, setSpecialities] = useState<any>([]);
   const [addedSpecialities, setAddedSpecialities] = useState<any>([]);
@@ -98,8 +99,9 @@ export default function () {
             },
           }
         )
-        .then(function () {
+        .then(async function () {
           console.log("Success!");
+          await refetchUser();
         });
       toast("Success!");
     } catch (err) {
