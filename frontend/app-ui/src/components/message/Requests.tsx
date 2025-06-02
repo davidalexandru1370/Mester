@@ -126,8 +126,10 @@ export default function () {
             }
         } catch (error) {
             if (error instanceof ApiError) {
-                console.log(error);
-                toast.error(`${error.message}`);
+                if (error.error.type !== "aborted") {
+                    console.log(error.error);
+                    toast.error(`${error.message}`);
+                }
             } else {
                 console.log("Unexpected error:", error);
                 toast.error("An unexpected error occurred.");

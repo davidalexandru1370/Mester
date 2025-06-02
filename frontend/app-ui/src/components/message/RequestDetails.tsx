@@ -60,7 +60,10 @@ export default function ({
                 setTradesManResponses(messages);
             } catch (error) {
                 if (error instanceof ApiError) {
-                    toast.error(`${error.message}`);
+                    if (error.error.type !== "aborted") {
+                        console.log(error);
+                        toast.error(`${error.message}`);
+                    }
                 } else {
                     console.error("Unexpected error:", error);
                 }
