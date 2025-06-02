@@ -62,7 +62,7 @@ namespace Registry.Migrations
                         .IsUnique()
                         .HasFilter("[JobApprovedId] IS NOT NULL");
 
-                    b.ToTable("ClientRequests");
+                    b.ToTable("ClientRequests", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.Conversation", b =>
@@ -86,7 +86,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("TradesManId");
 
-                    b.ToTable("Conversations");
+                    b.ToTable("Conversations", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.Job", b =>
@@ -107,7 +107,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("TradesManJobResponseId");
 
-                    b.ToTable("Jobs");
+                    b.ToTable("Jobs", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.Message", b =>
@@ -138,7 +138,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("FromId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.Review", b =>
@@ -161,7 +161,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("JobId");
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.Speciality", b =>
@@ -183,7 +183,7 @@ namespace Registry.Migrations
                     b.HasIndex("Type")
                         .IsUnique();
 
-                    b.ToTable("Specialties");
+                    b.ToTable("Specialties", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.TradesMan", b =>
@@ -205,7 +205,7 @@ namespace Registry.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TradesMan");
+                    b.ToTable("TradesMan", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManImages", b =>
@@ -225,7 +225,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("TradesmanId");
 
-                    b.ToTable("TradesManImages");
+                    b.ToTable("TradesManImages", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManJobResponse", b =>
@@ -264,7 +264,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("TradesManId");
 
-                    b.ToTable("TradesManJobResponses");
+                    b.ToTable("TradesManJobResponses", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.TradesManSpecialities", b =>
@@ -286,7 +286,7 @@ namespace Registry.Migrations
 
                     b.HasIndex("SpecialityId");
 
-                    b.ToTable("TradesManSpecialities");
+                    b.ToTable("TradesManSpecialities", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.User", b =>
@@ -324,7 +324,7 @@ namespace Registry.Migrations
                         .IsUnique()
                         .HasFilter("[Email] IS NOT NULL");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("Registry.Models.ClientJobRequest", b =>

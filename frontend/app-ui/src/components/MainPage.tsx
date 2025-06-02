@@ -128,7 +128,7 @@ export default function MainPage() {
               className="m-10 border border-gray-300 rounded-lg p-4"
               key={tradesman.id}
             >
-              <div onClick={() => redirectToTradesman(tradesman.id)}>
+              <div>
                 <ServiceTypeCard
                   tradesmanId={tradesman.id}
                   key={tradesman.id}

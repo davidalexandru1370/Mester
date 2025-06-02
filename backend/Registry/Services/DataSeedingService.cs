@@ -48,8 +48,15 @@ public class DataSeedingService : IDataSeedingService
             {
                 Id = Guid.Parse("32fff8b1-6f6a-4954-84b2-e44c4c5c83c4"),
                 Type = "Curent electric",
-                ImageUrl = "https://chatgpt.com/backend-api/public_content/enc/eyJpZCI6Im1fNjgzMzRhNjRmNzcwODE5MWI0NjdhNDE3YmRlMjI1YTE6ZmlsZV8wMDAwMDAwMGYwMjA2MWY4OTEwMjM5NDVmNDNmM2ViOSIsInRzIjoiNDg1NjA4IiwicCI6InB5aSIsInNpZyI6ImVmNmUyMmU4ZWM4MTM2MjU1NGJlNmQyMjQ3MTU1ZTg2NGRhOTU1NmQ4MjcwYjdjY2Y0ZjUzMGU1ZTZmNzcxOWEiLCJ2IjoiMCIsImdpem1vX2lkIjpudWxsfQ=="
+                ImageUrl = "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/ChatGPT%20Image%20Jun%202%2C%202025%2C%2007_55_22%20PM.png?alt=media&token=69228b8e-8cef-4201-a4d2-b99101df521f"
             }
+        };
+
+        var workorderImages = new List<string>
+        {
+            "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/image%20(1).webp?alt=media&token=5ad7db11-9052-4bbf-b9e7-9f4663f70766",
+            "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/image%20(2).webp?alt=media&token=d1d87a5a-4db2-44aa-af85-32ca36221f55",
+            "https://firebasestorage.googleapis.com/v0/b/destinationbucketimages.appspot.com/o/image.webp?alt=media&token=fdc870ee-26d1-428a-9cb2-7cfb6269f659",
         };
 
         var users = new List<User>
@@ -76,6 +83,10 @@ public class DataSeedingService : IDataSeedingService
                     Price = (uint)random.Next(1, 500),
                 }).ToList(),
             });
+
+            var tradesmanId = (await _tradesManService.GetTradesManInfo(user.Id)).Id;
+
+            await _tradesManService.AddWorkorderImages(tradesmanId, workorderImages);
         }
     }
 }

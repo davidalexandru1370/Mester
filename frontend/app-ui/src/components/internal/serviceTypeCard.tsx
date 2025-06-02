@@ -7,15 +7,19 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useNavigate } from "react-router-dom";
 
 const ServiceTypeCard: FC<ServiceTypeCardProps> = ({
   title,
+  tradesmanId,
   specialities,
 }: ServiceTypeCardProps) => {
+  const navigate = useNavigate();
+
   return (
     <div>
       <div className="flex flex-col items-center justify-center">
-        <p>{title}</p>
+        <a href={`/tradesman/${tradesmanId}`}>{title}</a>
         <Carousel className="w-full max-w-xs">
           <CarouselContent>
             {Array.from({ length: specialities.length }).map((_, index) => {

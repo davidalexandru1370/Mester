@@ -1,7 +1,7 @@
 ﻿namespace Registry.DTO
 {
-    public class UserImageDTO
+    public class UserImageDTO : ImageDTO
     {
-        public string ImageUrl { get; set; }
+
     }
 }

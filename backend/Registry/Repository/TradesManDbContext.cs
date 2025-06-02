@@ -23,6 +23,7 @@ namespace Registry.Repository
         public virtual DbSet<Message> Messages { get; set; }
         public virtual DbSet<Conversation> Conversations { get; set; }
         public virtual DbSet<TradesManJobResponse> TradesManJobResponses { get; set; }
+        public virtual DbSet<TradesManImages> TradesManImages { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

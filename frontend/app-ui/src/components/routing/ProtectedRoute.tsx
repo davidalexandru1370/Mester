@@ -39,6 +39,7 @@ export default function ProtectedRoute({
       } catch (error) {
         console.error("Failed to fetch user details:", error);
         setUser(null);
+        throw error;
       }
     };
 

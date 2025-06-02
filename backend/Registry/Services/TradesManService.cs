@@ -7,17 +7,17 @@ using Registry.Services.Interfaces;
 
 namespace Registry.Services
 {
-    // TODO: this should be in DTO or contracts?
     public record FilterListTradesMen(List<string>? Specialties);
 
     public class TradesManService : ITradesManService
     {
-        // A bit lazy to create repo for everything...should we use just the context?
         private readonly TradesManDbContext _context;
+        private readonly IImageService _imageService;
 
-        public TradesManService(TradesManDbContext context)
+        public TradesManService(TradesManDbContext context, IImageService imageService)
         {
             _context = context;
+            _imageService = imageService;
         }
 
         public async Task<Speciality> AddSpecialty(Speciality speciality)
@@ -52,12 +52,10 @@ namespace Registry.Services
         {
             return await _context.Specialties.Select(s => s.Type).ToListAsync();
         }
-
         public async Task<Speciality?> FindSpeciality(string Type)
         {
             return await _context.Specialties.FirstOrDefaultAsync(x => x.Type == Type);
         }
-
         public async Task<List<Speciality>> GetSpecialitiesByName(IList<string> specialitiesTypeNames)
         {
             var specialities = new List<Speciality>();
@@ -80,7 +78,6 @@ namespace Registry.Services
             }
             return specialities;
         }
-
         public async Task UpdateTradesManProfile(User user, TradesManDTO tradesManDTO)
         {
             var specialities = (await GetSpecialitiesByName(tradesManDTO.Specialities.Select(s => s.Name).ToList())).Select((s, index) => new TradesManSpecialities
@@ -104,7 +101,6 @@ namespace Registry.Services
             _context.Update(user);
             await _context.SaveChangesAsync();
         }
-
         public async Task<List<TradesManListDTO>> GetTradesManList(FilterListTradesMen filter)
         {
             //TODO: add sorting based on rating
@@ -141,10 +137,14 @@ namespace Registry.Services
 
         public async Task<TradesManInfoPageDTO?> GetTradesManInfo(Guid id)
         {
-            var r = await _context.Users.Include(x => x.TradesManProfile)
-                .ThenInclude(x => x.Specialities)
+            var r = await _context.Users
+                .Include(x => x.TradesManProfile)
+                    .ThenInclude(x => x.Images)
+                .Include(x => x.TradesManProfile)
+                    .ThenInclude(x => x.Specialities)
+                    .ThenInclude(x => x.Speciality)
                 .Where(x => x.TradesManProfile != null)
-                .FirstAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == id); // Changed FirstAsync to FirstOrDefaultAsync to handle null case
 
             if (r is null)
             {
@@ -154,10 +154,15 @@ namespace Registry.Services
             return new TradesManInfoPageDTO
             {
                 Id = r.Id,
+                ImageUrl = r.ImageUrl,
                 Name = r.Name,
                 City = r.TradesManProfile!.City,
                 County = r.TradesManProfile!.County,
                 Description = r.TradesManProfile!.Description,
+                Images = r.TradesManProfile.Images.Select(i => new ImageDTO
+                {
+                    ImageUrl = i.ImageUrl
+                }).ToList() ?? new List<ImageDTO>(),
                 Specialities = r.TradesManProfile.Specialities.Select(x => new SpecialityDTO
                 {
                     SpecialityId = x.SpecialityId,
@@ -166,7 +171,7 @@ namespace Registry.Services
                     Type = x.Speciality.Type,
                     UnitOfMeasure = x.UnitOfMeasure,
                     ImageUrl = x.Speciality.ImageUrl,
-                }).ToList()
+                }).ToList() ?? new List<SpecialityDTO>(),
             };
         }
 
@@ -188,6 +193,41 @@ namespace Registry.Services
                 r.Add(user.ToFindTradesManDTO());
             }
             return r;
+        }
+
+        public async Task AddWorkorderImages(Guid tradesManId, List<IFormFile> images)
+        {
+            var tradesmanImages = new List<TradesManImages>();
+
+            foreach (var image in images)
+            {
+                var imageUrl = await _imageService.UploadImage(image);
+                tradesmanImages.Add(new TradesManImages
+                {
+                    ImageUrl = imageUrl,
+                    TradesmanId = tradesManId,
+                });
+            }
+
+            _context.TradesManImages.AddRange(tradesmanImages);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AddWorkorderImages(Guid tradesManId, List<string> images)
+        {
+            var tradesmanImages = new List<TradesManImages>();
+
+            foreach (var image in images)
+            {
+                tradesmanImages.Add(new TradesManImages
+                {
+                    ImageUrl = image,
+                    TradesmanId = tradesManId,
+                });
+            }
+
+            _context.TradesManImages.AddRange(tradesmanImages);
+            await _context.SaveChangesAsync();
         }
     }
 }
