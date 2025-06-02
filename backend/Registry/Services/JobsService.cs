@@ -296,5 +296,22 @@ namespace Registry.Services
             await _context.SaveChangesAsync();
             return bill.ToBillDTO();
         }
+
+        public async Task<BillDTO> PayBill(User user, Guid billId)
+        {
+            var bill = await _context.Bills
+                // the biggest include possible. This shows that something I did wrong with the schema
+                .Include(b => b.Job)
+                .ThenInclude(j => j.TradesManJobResponse)
+                .ThenInclude(r => r.Conversation)
+                .ThenInclude(c => c.Request)
+                .FirstOrDefaultAsync(b => b.Id == billId && b.Job.TradesManJobResponse.Conversation.Request.InitiatedById == user.Id)
+                ?? throw new NotFoundException();
+            if (bill.Paid) throw new ConflictException("bill already paied");
+            bill.Paid = true;
+            _context.Update(bill);
+            await _context.SaveChangesAsync();
+            return bill.ToBillDTO();
+        }
     }
 }

@@ -9,5 +9,8 @@
         public required string BillImage { get; set; }
         public required decimal Amount { get; set; }
         public required bool Paid { get; set; }
+        public required DateTime Sent { get; set; }
+        public required DateTime? Seen { get; set; }
+
     }
 }

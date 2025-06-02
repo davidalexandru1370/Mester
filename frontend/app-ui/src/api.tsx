@@ -1,5 +1,4 @@
 import axios from "axios";
-import { Interface } from "readline";
 
 const BASE_URL = "https://localhost:8081";
 
@@ -168,10 +167,11 @@ export interface Bill {
     billImage: string;
     amount: number;
     paid: boolean;
+    sent: string;
+    seen?: string;
 }
 
 export interface CreateBill {
-    jobId: string;
     description: string;
     billImageBase64: string;
     amount: number;
@@ -510,12 +510,12 @@ export async function acceptTradesManJobResponse(responseId: string, token: stri
 }
 
 
-export async function sendBillRequest(responseId: string, token: string, signal?: AbortSignal): Promise<undefined> {
+export async function sendBillRequest(jobId: string, createBillRequest: CreateBill, token: string, signal?: AbortSignal): Promise<Bill> {
     try {
-        await axios
-            .patch(
-                `${BASE_URL}/api/Response/${responseId}/accept`,
-                undefined,
+        const r = await axios
+            .post(
+                `${BASE_URL}/api/Job/${jobId}/bills`,
+                createBillRequest,
                 {
                     timeout: 5000,
                     headers: {
@@ -524,6 +524,7 @@ export async function sendBillRequest(responseId: string, token: string, signal?
                     signal
                 },
             );
+        return r.data as Bill;
     }
     catch (e) {
         throw new ApiError(convertError(e))
@@ -531,11 +532,11 @@ export async function sendBillRequest(responseId: string, token: string, signal?
 }
 
 
-export async function markAsPaiedBillRequest(responseId: string, token: string, signal?: AbortSignal): Promise<undefined> {
+export async function payBillRequest(billId: string, token: string, signal?: AbortSignal): Promise<undefined> {
     try {
         await axios
             .patch(
-                `${BASE_URL}/api/Response/${responseId}/accept`,
+                `${BASE_URL}/api/Bill/${billId}/pay`,
                 undefined,
                 {
                     timeout: 5000,

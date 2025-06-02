@@ -1,10 +1,10 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, Input, Label } from "reactstrap";
-import { acceptTradesManJobResponse, ApiError, ClientJobRequest, Conversation, createTradesManJobResponse, findTradesMan, FindTradesMan, getConversation, getConversations, getGlobalRequests, getMessages, Message, MessageOrResponseOrBill, sendMessage, TradesManJobResponse } from "@/api";
+import { acceptTradesManJobResponse, ApiError, ClientJobRequest, Conversation, createTradesManJobResponse, getConversation, getConversations, getGlobalRequests, getMessages, MessageOrResponseOrBill, payBillRequest, sendBillRequest, sendMessage } from "@/api";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Switch } from "../ui/switch";
 import { useUser } from "@/context/UserContext";
@@ -24,8 +24,6 @@ export default function () {
 
     const [dialogStateSendOffer, setDialogStateSendOffer] = useState<null | { conversationId: string }>(null);
 
-    const [newUserName, setNewUserName] = useState("");
-    const [usersSuggestions, setUsersSuggestions] = useState<FindTradesMan[] | null>([]);
     const [includeGlobalRequests, setIncludeGlobalRequests] = useState(false);
     const { token } = useToken();
     const { user } = useUser();
@@ -421,17 +419,34 @@ export default function () {
                                             >
                                                 <h4>Bill request</h4>
                                                 <p>{msg.bill.description}</p>
-                                                {user?.isTradesman === true && msg.bill.paid ? <p>The bill was paid</p> : <p>The bill is still not paied</p>}
-                                                {user?.isTradesman === false && msg.bill.paid ?
-                                                    <div>You paied {msg.bill.amount}</div> :
+                                                <img src={msg.bill.billImage} alt="Bill" className="w-full h-auto rounded-lg mb-2" />
+                                                {user?.isTradesman === true && (msg.bill.paid ? <p><b>The bill in value of {msg.bill.amount} was paid</b></p> : <p><b>The bill in value of {msg.bill.amount} is still not paid</b></p>)}
+                                                {user?.isTradesman === false && (msg.bill.paid ?
+                                                    <div><b>You paid {msg.bill.amount}</b></div> :
                                                     <div>
-                                                        <p>You have to pay {msg.bill.amount}</p>
+                                                        <p><b>You have to pay {msg.bill.amount}</b></p>
                                                         <Button
                                                             className="mt-2"
                                                             onClick={async () => {
-
+                                                                try {
+                                                                    await payBillRequest(msg.bill.id, token);
+                                                                    msg.bill.paid = true;
+                                                                    if (messages) {
+                                                                        setMessages([...messages]);
+                                                                    }
+                                                                }
+                                                                catch (error) {
+                                                                    if (error instanceof ApiError) {
+                                                                        if (error.error.type !== "aborted") {
+                                                                            console.log(error);
+                                                                            toast.error(`${error.message}`);
+                                                                        }
+                                                                    } else {
+                                                                        throw error;
+                                                                    }
+                                                                }
                                                             }}>Mark as paid</Button>
-                                                    </div>}
+                                                    </div>)}
                                             </div>
                                     }
 
@@ -491,10 +506,10 @@ export default function () {
                                 type="text"
                                 name="description"
                                 value={billFormData.description}
-                                onChange={() => {
+                                onChange={(e) => {
                                     setBillFormData({
                                         ...billFormData,
-                                        description: billFormData.description,
+                                        description: e.target.value,
                                     })
                                 }}
                                 placeholder="Enter description"
@@ -507,10 +522,10 @@ export default function () {
                                 type="number"
                                 name="amount"
                                 value={billFormData.amount}
-                                onChange={() => {
+                                onChange={(e) => {
                                     setBillFormData({
                                         ...billFormData,
-                                        amount: billFormData.amount,
+                                        amount: e.target.value,
                                     })
                                 }}
                                 placeholder="Enter amount"
@@ -544,7 +559,7 @@ export default function () {
                         {billFormData.error && <p className="text-red-500 text-sm">{billFormData.error}</p>}
 
 
-                        <Button type="submit" onClick={async (e) => {
+                        <Button type="submit" onClick={async () => {
                             let amountNum;
                             try {
                                 amountNum = parseFloat(billFormData.amount);
@@ -555,8 +570,48 @@ export default function () {
                             if (!billFormData.description.trim()) {
                                 setBillFormData({ ...billFormData, error: "Description is required" })
                                 return;
-                            };
+                            }
+                            if (!billFormData.image) {
+                                setBillFormData({ ...billFormData, error: "Image is required" })
+                                return;
+                            }
                             try {
+                                const r = await sendBillRequest(billFormData.jobId!,
+                                    {
+                                        amount: amountNum,
+                                        description: billFormData.description,
+                                        billImageBase64: billFormData.image
+                                    }, token);
+                                setBillFormData({
+                                    jobId: null,
+                                    amount: "",
+                                    description: "",
+                                    image: null,
+                                    error: null
+                                });
+                                const newMessage: MessageOrResponseOrBill = {
+                                    sent: r.sent,
+                                    seen: r.seen,
+                                    message: undefined,
+                                    bill: {
+                                        id: r.id,
+                                        amount: r.amount,
+                                        description: r.description,
+                                        paid: false, // TODO: handle paid state
+                                        jobId: r.jobId,
+                                        billImage: r.billImage,
+                                        sent: r.sent,
+                                        seen: r.seen
+                                    },
+                                    response: undefined
+                                };
+                                setMessages((prev) => {
+                                    if (prev === null) {
+                                        return [newMessage]
+                                    } else {
+                                        return [...prev, newMessage];
+                                    }
+                                });
                             } catch (error) {
                                 if (error instanceof ApiError) {
                                     if (error.error.type !== "aborted") {
@@ -597,7 +652,7 @@ export default function () {
                             />
                         </div>
 
-                        <Button type="submit" onClick={async (e) => {
+                        <Button type="submit" onClick={async () => {
                             try {
                                 const amountNum = parseFloat(amount);
                                 if (date.trim() === "") throw new Error();
