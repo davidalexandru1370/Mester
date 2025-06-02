@@ -1,4 +1,4 @@
-import { ApiError, clientGetRequestsConversations, ClientJobRequest, ClientJobRequestWithoutId, ClientJobResponsesConversation } from "@/api";
+import { ApiError, clientGetRequestsConversations, ClientJobRequest, ClientJobRequestCreateOrUpdate, ClientJobResponsesConversation } from "@/api";
 import { useEffect, useState } from "react";
 import { Label } from "reactstrap";
 import { Input } from "../ui/input";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 interface RequestDetailsProps {
     initialRequestDetails?: ClientJobRequest,
-    onUpdateRequestDetails: (details: ClientJobRequestWithoutId) => void;
+    onUpdateRequestDetails: (details: ClientJobRequestCreateOrUpdate) => void;
     disableUpdateButton: boolean
 }
 
@@ -21,7 +21,7 @@ export default function ({
 }: RequestDetailsProps) {
     const { token } = useToken();
 
-    const initialValue: ClientJobRequestWithoutId = {
+    const initialValue: ClientJobRequestCreateOrUpdate = {
         id: initialRequestDetails?.id,
         description: initialRequestDetails?.description || "",
         title: initialRequestDetails?.title || "",
@@ -35,7 +35,7 @@ export default function ({
 
 
     useEffect(() => {
-        const initialValue: ClientJobRequestWithoutId = {
+        const initialValue: ClientJobRequestCreateOrUpdate = {
             id: initialRequestDetails?.id,
             description: initialRequestDetails?.description || "",
             title: initialRequestDetails?.title || "",
@@ -89,13 +89,13 @@ export default function ({
     return (
         <div className="justify-center mt-6">
             <div className={cn("gap-4")}>
-            <h2>Edit Job Request</h2>
-            <div className="space-y-4">
-                {selectedRequest.requestedOn && <div>
-                    <Label>Requested On {selectedRequest.requestedOn}</Label>
-                </div>}
+                <h2>Edit Job Request</h2>
+                <div className="space-y-4">
+                    {selectedRequest.requestedOn && <div>
+                        <Label>Requested On {selectedRequest.requestedOn}</Label>
+                    </div>}
 
-                {/*
+                    {/*
                 <div>
                     <Checkbox checked={includeStartDate} onCheckedChange={e => {
                         if (e === "indeterminate") return;
@@ -111,46 +111,46 @@ export default function ({
                     />}
                 </div>*/}
 
-                <div className="mx-25">
-                    <Label>Title</Label>
-                    <Input
-                        value={selectedRequest.title}
-                        onChange={(e) => setSelectedRequest({ ...selectedRequest, title: e.target.value })}
-                    />
-                </div>
+                    <div className="mx-25">
+                        <Label>Title</Label>
+                        <Input
+                            value={selectedRequest.title}
+                            onChange={(e) => setSelectedRequest({ ...selectedRequest, title: e.target.value })}
+                        />
+                    </div>
 
-                <div className="mx-25">
-                    <Label>Description</Label>
-                    <textarea className="flex justify-center items-center h-30 min-w-0 w-full border"
-                        value={selectedRequest.description}
-                        onChange={(e) => setSelectedRequest({ ...selectedRequest, description: e.target.value })}
-                    />
-                </div>
+                    <div className="mx-25">
+                        <Label>Description</Label>
+                        <textarea className="flex justify-center items-center h-30 min-w-0 w-full border"
+                            value={selectedRequest.description}
+                            onChange={(e) => setSelectedRequest({ ...selectedRequest, description: e.target.value })}
+                        />
+                    </div>
 
-                <div>
-                    <Checkbox
-                        checked={selectedRequest.showToEveryone}
-                        onCheckedChange={(val) => {
-                            if (val !== "indeterminate")
-                                setSelectedRequest({ ...selectedRequest, showToEveryone: val })
-                        }
-                        }
-                    />
-                    <Label className="ml-1">Show to Everyone</Label>
-                </div>
+                    <div>
+                        <Checkbox
+                            checked={selectedRequest.showToEveryone}
+                            onCheckedChange={(val) => {
+                                if (val !== "indeterminate")
+                                    setSelectedRequest({ ...selectedRequest, showToEveryone: val })
+                            }
+                            }
+                        />
+                        <Label className="ml-1">Show to Everyone</Label>
+                    </div>
 
-                <div>
-                    <Checkbox
-                        checked={selectedRequest.open}
-                        onCheckedChange={(val) => {
-                            if (val !== "indeterminate")
-                                setSelectedRequest({ ...selectedRequest, open: val })
-                        }}
-                    />
-                    <Label className="ml-1">Open</Label>
-                </div>
+                    <div>
+                        <Checkbox
+                            checked={selectedRequest.open}
+                            onCheckedChange={(val) => {
+                                if (val !== "indeterminate")
+                                    setSelectedRequest({ ...selectedRequest, open: val })
+                            }}
+                        />
+                        <Label className="ml-1">Open</Label>
+                    </div>
 
-                {/* <div className="space-y-2">
+                    {/* <div className="space-y-2">
                         <Label>Images</Label>
                         {formData.imagesUrl.map((url, index) => (
                             <div key={index} className="flex items-center gap-2">
@@ -167,41 +167,41 @@ export default function ({
                             Add Image
                         </Button>
                     </div> */}
-                <div>
-                    <Button onClick={() => {
-                        const r = { ...selectedRequest };
-                        if (!includeStartDate) {
-                            r.startDate = undefined;
-                        }
-                        onUpdateRequestDetails(r);
-                    }} disabled={disableUpdateButton}>{initialRequestDetails ? "Update" : "Create"}</Button>
-                </div>
-            </div>
-
-
-            <div className="space-y-4">
-                {initialRequestDetails && !tradesManResponses && "Loading conversations..."}
-                {tradesManResponses?.map((response) => (
-                    <div
-                        key={response.id}
-                        className="flex justify-start"
-                        onClick={() => {
-                            // TODO: navigate to the conversation with that user
-                        }}
-                    >
-                        <p>{response.tradesMan.name}</p>
-                        {response.response &&
-                            <div
-                                className={"max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm bg-gray-400 rounded-bl-none"}
-                            >
-                                <h4>Proposed resolution</h4>
-                                <p>Can be done by {response.response.AproximationEndDate}</p>
-                                <p>The workmanship will be {response.response.workmanshipAmount}</p>
-                            </div>
-                        }
+                    <div>
+                        <Button onClick={() => {
+                            const r = { ...selectedRequest };
+                            if (!includeStartDate) {
+                                r.startDate = undefined;
+                            }
+                            onUpdateRequestDetails(r);
+                        }} disabled={disableUpdateButton}>{initialRequestDetails ? "Update" : "Create"}</Button>
                     </div>
-                ))}
-            </div>
+                </div>
+
+
+                <div className="space-y-4">
+                    {initialRequestDetails && !tradesManResponses && "Loading conversations..."}
+                    {tradesManResponses?.map((response) => (
+                        <div
+                            key={response.id}
+                            className="flex justify-start"
+                            onClick={() => {
+                                // TODO: navigate to the conversation with that user
+                            }}
+                        >
+                            <p>{response.tradesMan.name}</p>
+                            {response.response &&
+                                <div
+                                    className={"max-w-xs px-4 py-2 rounded-2xl shadow-md text-white text-sm bg-gray-400 rounded-bl-none"}
+                                >
+                                    <h4>Proposed resolution</h4>
+                                    <p>Can be done by {response.response.aproximationEndDate}</p>
+                                    <p>The workmanship will be {response.response.workmanshipAmount}</p>
+                                </div>
+                            }
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

@@ -54,8 +54,8 @@ namespace Registry.Controllers
         public async Task<IActionResult> UpdateClientRequest(Guid clientRequestId, [FromBody] UpdateClientJobRequest request)
         {
             var user = await _userService.GetByClaims(User);
-            await _serviceJobs.UpdateClientRequest(user, clientRequestId, request);
-            return Ok();
+            var r = await _serviceJobs.UpdateClientRequest(user, clientRequestId, request);
+            return Ok(r);
         }
 
         [Authorize]

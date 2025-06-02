@@ -8,13 +8,13 @@ namespace Registry.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ConversationsController : ControllerBase
+    public class ConversationController : ControllerBase
     {
         private readonly ITradesManService _service;
         private readonly IJobsService _serviceJobs;
 
         private readonly IUserService _userService;
-        public ConversationsController(ITradesManService service, IUserService userService, IJobsService serviceJobs)
+        public ConversationController(ITradesManService service, IUserService userService, IJobsService serviceJobs)
         {
             _service = service;
             _userService = userService;
@@ -62,6 +62,15 @@ namespace Registry.Controllers
 
             var r = await _serviceJobs.SendMessage(user, conversationId, request);
 
+            return Ok(r);
+        }
+
+        [Authorize]
+        [HttpPost("{conversationId}/responses")]
+        public async Task<IActionResult> TradesManAddJobResponse(Guid conversationId, [FromBody] CreateTradesManJobResponse response)
+        {
+            var user = await _userService.GetTradesManByClaims(User);
+            var r = await _serviceJobs.AddTradesManJobResponse(user, conversationId, response);
             return Ok(r);
         }
     }
