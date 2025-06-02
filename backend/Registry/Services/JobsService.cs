@@ -15,8 +15,8 @@ namespace Registry.Services
     {
         // A bit lazy to create repo for everything...should we use just the context?
         private readonly TradesManDbContext _context;
-        private readonly ImageService _imageService;
-        public JobsService(TradesManDbContext context, ImageService imageService)
+        private readonly IImageService _imageService;
+        public JobsService(TradesManDbContext context, IImageService imageService)
         {
             _context = context;
             _imageService = imageService;

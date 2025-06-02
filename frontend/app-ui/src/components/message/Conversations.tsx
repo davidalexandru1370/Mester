@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Switch } from "../ui/switch";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
-
+import { Buffer } from "buffer"
 type ConversationOrGlobalRequest = { conversation: Conversation, globalRequest: undefined } | { globalRequest: ClientJobRequest, conversation: undefined };
 
 export default function () {
@@ -300,6 +300,23 @@ export default function () {
         }
     }
 
+
+    const [billFormData, setBillFormData] = useState<{
+        jobId: null | string,
+        description: string,
+        amount: string,
+        image: null | string,
+        error: null | string
+    }>({
+        jobId: null,
+        description: "",
+        amount: "",
+        image: null,
+        error: null
+    });
+
+
+
     return (
         <div>
             <NavMenu />
@@ -438,7 +455,15 @@ export default function () {
                             </Button>
                         }
                         {isCurrentConversationApproved && user?.isTradesman === true &&
-                            <Button variant="outline" onClick={() => { }}>
+                            <Button variant="outline" onClick={() => {
+                                setBillFormData({
+                                    jobId: selectedConversation.conversation?.clientRequest.jobApprovedId!,
+                                    amount: "",
+                                    description: "",
+                                    image: null,
+                                    error: null
+                                })
+                            }}>
                                 Send bill
                             </Button>
                         }
@@ -446,50 +471,99 @@ export default function () {
                 </div>
                 }
 
-                <Dialog open={!!dialogStateSendOffer} onOpenChange={(open) => { if (!open) setDialogStateSendOffer(null); }}>
+                <Dialog open={!!billFormData.jobId} onOpenChange={(open) => {
+                    if (!open) setBillFormData({
+                        jobId: null,
+                        amount: "",
+                        description: "",
+                        image: null,
+                        error: null
+                    });
+                }}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Send a bill</DialogTitle>
                         </DialogHeader>
+
                         <div>
-                            <Label htmlFor="date">Select a Date</Label>
+                            <Label htmlFor="description">Description</Label>
                             <Input
-                                id="date"
-                                type="date"
-                                value={date}
-                                onChange={(e) => setDate(e.target.value)}
+                                type="text"
+                                name="description"
+                                value={billFormData.description}
+                                onChange={() => {
+                                    setBillFormData({
+                                        ...billFormData,
+                                        description: billFormData.description,
+                                    })
+                                }}
+                                placeholder="Enter description"
                             />
                         </div>
 
                         <div>
-                            <Label htmlFor="amount">Enter Amount</Label>
+                            <Label htmlFor="amount">Amount</Label>
                             <Input
-                                id="amount"
                                 type="number"
-                                step="0.01"
-                                placeholder="0.00"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
+                                name="amount"
+                                value={billFormData.amount}
+                                onChange={() => {
+                                    setBillFormData({
+                                        ...billFormData,
+                                        amount: billFormData.amount,
+                                    })
+                                }}
+                                placeholder="Enter amount"
                             />
                         </div>
+
+                        <div>
+                            <Label htmlFor="image">Image (required)</Label>
+                            <Input
+                                type="file"
+                                name="image"
+                                accept="image/jpeg, image/png"
+                                onChange={e => {
+                                    (async () => {
+                                        if (e.target.files && e.target.files[0]) {
+                                            const data = await e.target.files[0].arrayBuffer();
+                                            setBillFormData({
+                                                ...billFormData,
+                                                image: Buffer.from(data).toString("base64"),
+                                            });
+                                            // setBillFormData({
+                                            //     ...billFormData,
+                                            //     image: await e.target.files[0].arrayBuffer()
+                                            // })
+                                        }
+                                    })();
+                                }}
+                            />
+                        </div>
+
+                        {billFormData.error && <p className="text-red-500 text-sm">{billFormData.error}</p>}
+
 
                         <Button type="submit" onClick={async (e) => {
+                            let amountNum;
                             try {
-                                const amountNum = parseFloat(amount);
-                                if (date.trim() === "") throw new Error();
-                                try {
-                                    await onSendOffer(dialogStateSendOffer!.conversationId, amountNum, date);
-                                    setDialogStateSendOffer(null);
-                                } catch (error) {
-                                    if (error instanceof ApiError) {
-                                        if (error.error.type !== "aborted") {
-                                            console.log(error);
-                                            toast.error(`${error.message}`);
-                                        }
+                                amountNum = parseFloat(billFormData.amount);
+                            } catch (error) {
+                                setBillFormData({ ...billFormData, error: "Invalid amount" });
+                                return;
+                            }
+                            if (!billFormData.description.trim()) {
+                                setBillFormData({ ...billFormData, error: "Description is required" })
+                                return;
+                            };
+                            try {
+                            } catch (error) {
+                                if (error instanceof ApiError) {
+                                    if (error.error.type !== "aborted") {
+                                        console.log(error);
+                                        toast.error(`${error.message}`);
                                     }
                                 }
-                            } catch (error) {
-                                toast.error("Invalid input. Please check the amount and date.");
                             }
                         }}>Submit</Button>
                     </DialogContent>
@@ -545,6 +619,7 @@ export default function () {
                     </DialogContent>
                 </Dialog>
             </div>
+
         </div >
     );
 }
