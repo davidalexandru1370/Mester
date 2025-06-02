@@ -14,6 +14,8 @@ import {
   Label,
   Input,
 } from "reactstrap";
+import { RequestDto } from "@/domain/types/requestDto";
+import useToken from "./useToken";
 
 interface Speciality {
   specialityId: string;
@@ -41,8 +43,9 @@ const TradesmanProfile: FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { user } = useUser();
+  const { token } = useToken();
   const [modalOpen, setModalOpen] = useState(false);
-  const [requestMessage, setRequestMessage] = useState("");
+  const [requests, setRequests] = useState<RequestDto[]>([]);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -57,7 +60,26 @@ const TradesmanProfile: FC = () => {
         setLoading(false);
       }
     }
-    if (tradesmanId) fetchProfile();
+    async function fetchRequests() {
+      try {
+        const response = await axios.get(
+          `https://localhost:8081/api/requests`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setRequests(response.data);
+      } catch (err) {
+        console.error("Eroare la incarcarea cererilor:", err);
+      }
+    }
+
+    if (tradesmanId) {
+      fetchProfile();
+      fetchRequests();
+    }
   }, [tradesmanId]);
 
   function handleOpenModal() {
@@ -65,14 +87,30 @@ const TradesmanProfile: FC = () => {
   }
   function handleCloseModal() {
     setModalOpen(false);
-    setRequestMessage("");
   }
-  function handleSendRequest() {
-    // Here you would send the request to the backend
-    // For now, just close the modal
+  function handleSendRequest(requestId: string) {
     setModalOpen(false);
-    setRequestMessage("");
-    alert("Cererea a fost trimisa catre mester!");
+    if (!requestId) {
+      setError("Selecteaza o cerere pentru a o trimite.");
+      return;
+    }
+    axios
+      .post(
+        `https://localhost:8081/api/requests/${requestId}/send/tradesmen/${tradesmanId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then(() => {
+        alert("Cererea a fost trimisa cu succes!");
+      })
+      .catch((err) => {
+        console.error("Eroare la trimiterea cererii:", err);
+        setError("Eroare la trimiterea cererii.");
+      });
   }
 
   if (loading) {
@@ -91,44 +129,47 @@ const TradesmanProfile: FC = () => {
     <div>
       <NavMenu />
       <div className="container mt-4">
-        <div>
-          <div className="mb-4 d-flex justify-content-end">
-            <Button color="primary" onClick={handleOpenModal}>
-              Ofera o cerere acestui mester
-            </Button>
-          </div>
-          <Modal isOpen={modalOpen} toggle={handleCloseModal}>
-            <ModalHeader toggle={handleCloseModal}>
-              Trimite o cerere
-            </ModalHeader>
-            <ModalBody>
-              <Form>
-                <FormGroup>
-                  <Label for="requestMessage">Mesaj pentru mester</Label>
-                  <Input
-                    id="requestMessage"
-                    type="textarea"
-                    value={requestMessage}
-                    onChange={(e) => setRequestMessage(e.target.value)}
-                    placeholder="Scrie mesajul tau aici..."
-                  />
-                </FormGroup>
-              </Form>
-            </ModalBody>
-            <ModalFooter>
-              <Button
-                color="primary"
-                onClick={handleSendRequest}
-                disabled={!requestMessage.trim()}
-              >
-                Trimite cererea
-              </Button>{" "}
-              <Button color="secondary" onClick={handleCloseModal}>
-                Anuleaza
+        {user?.id === tradesmanId ? (
+          <></>
+        ) : (
+          <div>
+            <div className="mb-4 d-flex justify-content-end">
+              <Button color="primary" onClick={handleOpenModal}>
+                Ofera o cerere acestui mester
               </Button>
-            </ModalFooter>
-          </Modal>
-        </div>
+            </div>
+            <Modal isOpen={modalOpen} toggle={handleCloseModal}>
+              <ModalHeader toggle={handleCloseModal}>
+                Trimite o cerere
+              </ModalHeader>
+              <ModalBody>
+                <Form>
+                  {requests.map((request) => (
+                    <div className="card">
+                      <div className="card-body">
+                        <h5 className="card-title">Cerere: {request.name}</h5>
+                        <p className="card-text">{request.description}</p>
+                        <Button
+                          color="primary"
+                          onClick={() => {
+                            handleSendRequest(request.id);
+                          }}
+                        >
+                          Trimite cererea
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </Form>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="secondary" onClick={handleCloseModal}>
+                  Anuleaza
+                </Button>
+              </ModalFooter>
+            </Modal>
+          </div>
+        )}
         <div className="d-flex flex-column justify-content-between align-items-center mb-4">
           <img
             src={profile.imageUrl}
