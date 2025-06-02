@@ -8,5 +8,7 @@
         public string? Description { get; set; }
         public bool? ShowToEveryone { get; set; }
         public bool? Open { get; set; } = true;
+
+        public List<string>? ImagesUrl { get; set; }
     }
 }
