@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
@@ -10,6 +10,7 @@ import { Switch } from "../ui/switch";
 import { useUser } from "@/context/UserContext";
 import { useNavigate } from "react-router-dom";
 import { Buffer } from "buffer"
+import RequestDetails from "./RequestDetails";
 type ConversationOrGlobalRequest = { conversation: Conversation, globalRequest: undefined } | { globalRequest: ClientJobRequest, conversation: undefined };
 
 export default function () {
@@ -314,7 +315,12 @@ export default function () {
     });
 
 
-
+    const scrollRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: "instant" });
+        }
+    }, [messages]);
     return (
         <div>
             <NavMenu />
@@ -357,15 +363,20 @@ export default function () {
                 </div>
 
                 {/* Message Panel */}
-                {selectedConversation && <div className="flex-1 flex flex-col">
-                    <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-white to-blue-50">
+                {selectedConversation && <div className="flex-1 flex flex-col overflow-y-auto max-h-screen p-4">
+                    <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-white to-blue-50" >
+                        <div className="gray-200">
+                            <RequestDetails editable={false} disableUpdateButton={true} onUpdateRequestDetails={() => { }} initialRequestDetails={selectedConversation.conversation?.clientRequest ?? selectedConversation.globalRequest} />
+                        </div>
+                        <br />
                         <div className="space-y-4">
                             {messages ? "" : "Loading messages..."}
-                            {messages?.map((msg) => (
+                            {messages?.map((msg, index) => (
                                 <div
                                     key={msg.message ? msg.message.id : msg.response ? msg.response.id : msg.bill.id}
                                     className={`flex ${isMe(msg) ? "justify-end" : "justify-start"
                                         }`}
+                                    ref={index === messages.length - 1 ? scrollRef : null}
                                 >
                                     {msg.message ?
                                         //TODO: of coures I should create 3 different components for each type of message
@@ -455,7 +466,7 @@ export default function () {
                         </div>
                     </div>
 
-                    <div className="p-4 border-t bg-white flex gap-2">
+                    <div className="p-4 border-t bg-white flex gap-2" ref={scrollRef}>
                         <Input
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}

@@ -20,7 +20,6 @@ import {
 } from "@/domain/types/filters.ts";
 import ServiceTypeCard from "./internal/serviceTypeCard.tsx";
 import { TradesManDto } from "@/domain/types/tradesman/TradesManDto.ts";
-import { useNavigate } from "react-router-dom";
 
 function updateFiltersReducer(
   state: SearchTradesManFilters,
@@ -52,7 +51,6 @@ function updateFiltersReducer(
 export default function MainPage() {
   const [tradesmen, setTradesmen] = useState<any>([]);
   const [filters, updateFilters] = useReducer(updateFiltersReducer, {});
-  const navigator = useNavigate();
   const { counties } = useContext(DataStoreContext);
 
   useEffect(() => {
@@ -80,9 +78,9 @@ export default function MainPage() {
       });
   }
 
-  function redirectToTradesman(id: string) {
-    navigator(`/tradesman/${id}`);
-  }
+  // function redirectToTradesman(id: string) {
+  //   navigator(`/tradesman/${id}`);
+  // }
 
   return (
     <section>
@@ -119,7 +117,7 @@ export default function MainPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       </Container>
-      <h1>Ofertele curente</h1>
+      <h1>Current offers</h1>
       <br></br>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-2 lg:grid-cols-2 gap-4">
         {tradesmen?.map(function fn(tradesman: TradesManDto) {

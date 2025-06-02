@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = "https://localhost:8081";
+export const BASE_URL = "https://localhost:8081";
 
 
 export class ApiError extends Error {
@@ -138,7 +138,7 @@ export interface ClientJobRequestCreateOrUpdate {
     description: string;
     showToEveryone: boolean;
     open: boolean;
-    imagesUrl: string[];
+    imagesBase64: string[];
     jobApprovedId?: string;
 }
 
@@ -413,6 +413,7 @@ export interface TradesManJobResponse {
 
 export async function createRequest(params: ClientJobRequestCreateOrUpdate, token: string, signal?: AbortSignal): Promise<ClientJobRequest> {
     try {
+        console.log(params);
         const response = await axios
             .post(
                 `${BASE_URL}/api/Requests`,
@@ -456,8 +457,6 @@ export async function updateRequest(params: ClientJobRequestUpdate, token: strin
         throw new ApiError(convertError(e))
     }
 }
-
-
 
 
 export async function createTradesManJobResponse(params: {

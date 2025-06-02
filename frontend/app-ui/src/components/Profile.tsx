@@ -11,8 +11,8 @@ import Col from "react-bootstrap/Col";
 export default function () {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [userDetails, setUserDetails] = useState<UserDetailsDto | null>(null);
-  const [tradesmanShower, setTradesmanShower] = useState(false);
-  const { token, setToken } = useToken();
+  // const [tradesmanShower, setTradesmanShower] = useState(false);
+  const { token } = useToken();
   const [specialities, setSpecialities] = useState<any>([]);
   const [addedSpecialities, setAddedSpecialities] = useState<any>([]);
   const [name, setName] = useState("");
@@ -173,7 +173,7 @@ export default function () {
                       <img
                         src={
                           userDetails?.imageUrl &&
-                          /^https?:\/\/[^\s]+$/.test(userDetails.imageUrl)
+                            /^https?:\/\/[^\s]+$/.test(userDetails.imageUrl)
                             ? userDetails.imageUrl
                             : "https://via.placeholder.com/120x120.png?text=Profile"
                         }

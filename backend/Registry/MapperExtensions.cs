@@ -80,6 +80,9 @@ namespace Registry
 
         public static ClientJobRequestDTO ToClientJobRequestDTO(this ClientJobRequest request)
         {
+            Console.WriteLine("images");
+            Console.WriteLine(request.ImagesUrl);
+            Console.WriteLine(request.ImagesUrl.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList().Count);
             return new ClientJobRequestDTO
             {
                 Id = request.Id,
@@ -89,8 +92,7 @@ namespace Registry
                 Open = request.Open,
                 RequestedOn = request.RequestedOn,
                 ShowToEveryone = request.ShowToEveryone,
-                // TODO: add support for images
-                ImagesUrl = new(),
+                ImagesUrl = request.ImagesUrl.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
                 StartDate = request.StartDate,
                 Client = request.InitiatedBy.ToConversationUserDTO(),
                 TradesManResponseApproveId = request.JobApproved?.TradesManJobResponseId

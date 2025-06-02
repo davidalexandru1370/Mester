@@ -122,6 +122,8 @@ namespace Registry.Services
 
         public async Task<ClientJobRequestDTO> CreateClientRequest(User user, CreateClientJobRequest request)
         {
+            var imagesUrls = await Task.WhenAll(request.ImagesBase64.Select(i => _imageService.UploadImage(new Base64Stream(i).AsStream())));
+            Console.WriteLine("Am primit", imagesUrls.Length);
             var jobRequest = new ClientJobRequest
             {
                 Title = request.Title,
@@ -130,7 +132,7 @@ namespace Registry.Services
                 StartDate = request.StartDate,
                 InitiatedById = user.Id,
                 InitiatedBy = user,
-                ImagesUrl = []
+                ImagesUrl = string.Join(',', imagesUrls)
             };
             var entity = await _context.ClientRequests.AddAsync(jobRequest);
             await _context.SaveChangesAsync();
@@ -153,30 +155,31 @@ namespace Registry.Services
                 RequestId = clientRequestId,
                 Request = request,
                 TradesManId = tradesManId,
-
             };
             await _context.Conversations.AddAsync(conversation);
             await _context.SaveChangesAsync();
             conversation = await _context.Conversations.Where(c => c.Id == conversation.Id).Include(c => c.TradesMan).FirstOrDefaultAsync();
-            return conversation.ToConversationDTO(client.Id);
+            return conversation!.ToConversationDTO(client.Id);
         }
 
-        public async Task<ClientJobRequestDTO> UpdateClientRequest(User user, Guid clientRequestId, UpdateClientJobRequest request)
+        public async Task<ClientJobRequestDTO> UpdateClientRequest(User user, Guid clientRequestId, UpdateClientJobRequest requests)
         {
             var r = await _context.ClientRequests.Include(r => r.JobApproved).FirstOrDefaultAsync(r => r.Id == clientRequestId && r.InitiatedById == user.Id) ?? throw new NotFoundException();
-            if (request.Title is not null) r.Title = request.Title;
-            if (request.Description is not null) r.Description = request.Description;
-            if (request.ShowToEveryone is not null) r.ShowToEveryone = request.ShowToEveryone.Value;
-            if (request.Open is not null) r.Open = request.Open.Value;
-            if (request.IncludeStartDate ?? false) r.StartDate = request.StartDate;
-            List<string> urlArray = new List<string>();
-            if (request.ImagesUrl is not null)
-                foreach (var i in request.ImagesUrl)
+            if (requests.Title is not null) r.Title = requests.Title;
+            if (requests.Description is not null) r.Description = requests.Description;
+            if (requests.ShowToEveryone is not null) r.ShowToEveryone = requests.ShowToEveryone.Value;
+            if (requests.Open is not null) r.Open = requests.Open.Value;
+            if (requests.StartDate is not null) r.StartDate = requests.StartDate;
+            if (requests.ImagesBase64 is not null)
+            {
+                var urlArray = r.ImagesUrl.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+                foreach (var request in requests.ImagesBase64)
                 {
-                    string url = await _imageService.UploadImage(new Base64Stream(i).AsStream());
+                    string url = await _imageService.UploadImage(new Base64Stream(request).AsStream());
                     urlArray.Add(url);
                 }
-            r.ImagesUrl = urlArray;
+                r.ImagesUrl = string.Join(',', urlArray);
+            }
             _context.ClientRequests.Update(r);
             await _context.SaveChangesAsync();
             r.InitiatedBy = user;

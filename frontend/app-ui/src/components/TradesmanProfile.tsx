@@ -10,13 +10,11 @@ import {
   ModalFooter,
   Button,
   Form,
-  FormGroup,
-  Label,
-  Input,
 } from "reactstrap";
 import { RequestDto } from "@/domain/types/requestDto";
 import useToken from "./useToken";
 import { toast } from "react-toastify";
+import { BASE_URL } from "@/api";
 
 interface Speciality {
   specialityId: string;
@@ -64,7 +62,7 @@ const TradesmanProfile: FC = () => {
     async function fetchRequests() {
       try {
         const response = await axios.get(
-          `https://localhost:8081/api/requests`,
+          `${BASE_URL}/api/Requests`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -97,7 +95,7 @@ const TradesmanProfile: FC = () => {
     }
     axios
       .post(
-        `https://localhost:8081/api/requests/${requestId}/send/tradesmen/${tradesmanId}`,
+        `https://localhost:8081/api/Requests/${requestId}/send/tradesmen/${tradesmanId}`,
         {},
         {
           headers: {
@@ -109,6 +107,7 @@ const TradesmanProfile: FC = () => {
         alert("Cererea a fost trimisa cu succes!");
       })
       .catch((err) => {
+        console.log(err);
         console.error("Eroare la trimiterea cererii:", err);
         toast.error("Eroare la trimiterea cererii.");
       });
@@ -136,12 +135,12 @@ const TradesmanProfile: FC = () => {
           <div>
             <div className="mb-4 d-flex justify-content-end">
               <Button color="primary" onClick={handleOpenModal}>
-                Ofera o cerere acestui mester
+                Send a request
               </Button>
             </div>
             <Modal isOpen={modalOpen} toggle={handleCloseModal}>
               <ModalHeader toggle={handleCloseModal}>
-                Trimite o cerere
+                Your requests
               </ModalHeader>
               <ModalBody>
                 <Form>
@@ -156,7 +155,7 @@ const TradesmanProfile: FC = () => {
                             handleSendRequest(request.id);
                           }}
                         >
-                          Trimite cererea
+                          Send request
                         </Button>
                       </div>
                     </div>
@@ -165,7 +164,7 @@ const TradesmanProfile: FC = () => {
               </ModalBody>
               <ModalFooter>
                 <Button color="secondary" onClick={handleCloseModal}>
-                  Anuleaza
+                  Cancel
                 </Button>
               </ModalFooter>
             </Modal>
@@ -188,13 +187,13 @@ const TradesmanProfile: FC = () => {
         </div>
         <p>{profile.description}</p>
         <p>
-          <strong>Oras:</strong> {profile.city}
+          <strong>City:</strong> {profile.city}
         </p>
         <p>
-          <strong>Judet:</strong> {profile.county}
+          <strong>County:</strong> {profile.county}
         </p>
         <div>
-          <strong>Specialitati:</strong>
+          <strong>Specialties:</strong>
           <div className="row">
             {profile.specialities && profile.specialities.length > 0 ? (
               profile.specialities.map((spec) => (
@@ -217,13 +216,13 @@ const TradesmanProfile: FC = () => {
                 </div>
               ))
             ) : (
-              <div className="col-12">Nicio specialitate gasita.</div>
+              <div className="col-12">No specialities specified</div>
             )}
           </div>
         </div>
         <div>
           <p>
-            <strong>Lucrari anterioare:</strong>
+            <strong>Previous work:</strong>
           </p>
           <div className="row mb-4">
             {profile.images && profile.images.length > 0 ? (
@@ -238,7 +237,7 @@ const TradesmanProfile: FC = () => {
                 </div>
               ))
             ) : (
-              <div className="col-12">Nicio lucrare anterioara gasita.</div>
+              <div className="col-12">No previous work</div>
             )}
           </div>
         </div>

@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import NavMenu from "../NavMenu"
 import useToken from '../useToken';
 import { Button, Card, CardBody, CardHeader, } from "reactstrap";
-import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestCreateOrUpdate, createRequest, findTradesMan, FindTradesMan, updateRequest } from "@/api";
+import { ApiError, clientGetRequests, ClientJobRequest, ClientJobRequestCreateOrUpdate, createRequest, updateRequest } from "@/api";
 import { Dialog, DialogContent, } from "../ui/dialog";
 import { Plus } from "lucide-react";
 import RequestDetails from "./RequestDetails";
@@ -15,52 +15,10 @@ export default function () {
 
 
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [newUserName, setNewUserName] = useState("");
-    const [usersSuggestions, setUsersSuggestions] = useState<FindTradesMan[] | null>([]);
     const [selectedRequest, setSelectedRequest] = useState<ClientJobRequest | null>(null);
     const [disableUpdateButton, setDisableUpdateButton] = useState(false);
-    const handleImageChange = (request: ClientJobRequest, index: number, value: string) => {
-        const updatedImages = [...request.imagesUrl];
-        updatedImages[index] = value;
-        setSelectedRequest({ ...request, imagesUrl: updatedImages });
-    };
-
-    // const addImage = () => {
-    //     handleChange("imagesUrl", [...formData.imagesUrl, ""]);
-    // };
-
-    useEffect(() => {
-        if (!dialogOpen) {
-            setUsersSuggestions(null);
-            return;
-        }
-        let controller = new AbortController();
-        (async () => {
-            const trimmedUserName = newUserName.trim();
-            try {
-                const suggestions = await findTradesMan({
-                    pattern: trimmedUserName,
-                    limit: 10
-                }, token, controller.signal);
-                setUsersSuggestions(suggestions);
-            } catch (error) {
-                if (error instanceof ApiError) {
-                    if (error.error.type !== "aborted") {
-                        console.log(error);
-                        toast.error(`${error.message}`);
-                    }
-                    return;
-                } else {
-                    throw error;
-                }
-            }
-        })();
 
 
-        return () => {
-            controller.abort();
-        };
-    }, [dialogOpen, newUserName]);
 
     const { token } = useToken();
     useEffect(() => {
@@ -88,22 +46,6 @@ export default function () {
         }
     }, []);
 
-    const onClickUserSuggestion = (user: FindTradesMan) => {
-        setDialogOpen(false);
-        setNewUserName("");
-        // (async () => {
-        //     try {
-        //         const conversation = await getConversation(user.id, token);
-        //         setConversations([conversation, ...conversations]);
-        //         setSelectedConversation(conversation);
-        //     } catch (error) {
-        //         if (error instanceof ApiError) {
-        //             toast.error(`${error.message}`);
-        //         }
-        //     }
-        // })();
-    }
-
     const createOrUpdateRequest = async (request: ClientJobRequestCreateOrUpdate) => {
         setDisableUpdateButton(true);
         try {
@@ -117,11 +59,15 @@ export default function () {
                         return r
                     }
                 });
+                setSelectedRequest(updatedResponse);
                 setClientRequests(response);
+                console.log("Request updated successfully.");
                 toast.success("Request updated successfully.");
             } else {
                 const r = await createRequest(request, token);
+                setSelectedRequest(r);
                 setClientRequests([r, ...clientRequests])
+                console.log("Request created successfully.");
                 toast.success("Request created successfully.");
             }
         } catch (error) {
@@ -168,14 +114,20 @@ export default function () {
                 </div>
 
                 {/* Message Panel */}
-                {selectedRequest && <div className="flex-1 flex flex-col">
-                    <RequestDetails initialRequestDetails={selectedRequest} disableUpdateButton={disableUpdateButton} onUpdateRequestDetails={r => createOrUpdateRequest(r)} /> </div>}
+                {selectedRequest && <div className="flex-1 flex flex-col overflow-y-auto max-h-screen p-4">
+                    <RequestDetails
+                        initialRequestDetails={selectedRequest}
+                        disableUpdateButton={disableUpdateButton}
+                        onUpdateRequestDetails={(r) => createOrUpdateRequest(r)}
+                        editable={true}
+                    />
+                </div>}
 
 
                 {/* New Conversation Dialog */}
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                     <DialogContent>
-                        <RequestDetails disableUpdateButton={disableUpdateButton} onUpdateRequestDetails={r => {
+                        <RequestDetails editable={true} disableUpdateButton={disableUpdateButton} onUpdateRequestDetails={r => {
                             (async () => {
                                 await createOrUpdateRequest(r)
                                 setDialogOpen(false);

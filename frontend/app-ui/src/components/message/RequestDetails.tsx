@@ -7,44 +7,52 @@ import { Button } from "../ui/button";
 import useToken from "../useToken";
 import { toast } from "react-toastify";
 import { cn } from "@/lib/utils";
-
+import { Buffer } from "buffer"
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "../ui/carousel";
 interface RequestDetailsProps {
     initialRequestDetails?: ClientJobRequest,
     onUpdateRequestDetails: (details: ClientJobRequestCreateOrUpdate) => void;
     disableUpdateButton: boolean
+    editable: boolean;
 }
+
+
+type ClientJobRequestWithImagesUrls = ClientJobRequestCreateOrUpdate & { imagesUrl: string[] };
 
 export default function ({
     initialRequestDetails,
     onUpdateRequestDetails,
-    disableUpdateButton
+    disableUpdateButton,
+    editable
 }: RequestDetailsProps) {
     const { token } = useToken();
 
-    const initialValue: ClientJobRequestCreateOrUpdate = {
+    const initialValue: ClientJobRequestWithImagesUrls = {
         id: initialRequestDetails?.id,
         description: initialRequestDetails?.description || "",
         title: initialRequestDetails?.title || "",
         startDate: initialRequestDetails?.startDate || "",
-        imagesUrl: initialRequestDetails?.imagesUrl || [],
         requestedOn: initialRequestDetails?.requestedOn || "",
         showToEveryone: initialRequestDetails?.showToEveryone || false,
         open: initialRequestDetails?.open || true,
         jobApprovedId: initialRequestDetails?.jobApprovedId,
+        imagesUrl: initialRequestDetails?.imagesUrl ?? [],
+        imagesBase64: []
     };
 
 
     useEffect(() => {
-        const initialValue: ClientJobRequestCreateOrUpdate = {
+        const initialValue: ClientJobRequestWithImagesUrls = {
             id: initialRequestDetails?.id,
             description: initialRequestDetails?.description || "",
             title: initialRequestDetails?.title || "",
             startDate: initialRequestDetails?.startDate || "",
-            imagesUrl: initialRequestDetails?.imagesUrl || [],
             requestedOn: initialRequestDetails?.requestedOn || "",
             showToEveryone: initialRequestDetails?.showToEveryone || false,
             open: initialRequestDetails?.open || true,
             jobApprovedId: initialRequestDetails?.jobApprovedId,
+            imagesUrl: initialRequestDetails?.imagesUrl ?? [],
+            imagesBase64: []
         };
         setSelectedRequest(initialValue);
     }, [initialRequestDetails]);
@@ -73,27 +81,13 @@ export default function ({
             controller.abort();
         }
     }, [selectedRequest]);
-    const handleImageChange = (index: number, value: string) => {
-        const updatedImages = Array.from(selectedRequest.imagesUrl);
-        updatedImages[index] = value;
-        setSelectedRequest({ ...selectedRequest, imagesUrl: updatedImages })
-    };
 
-    const addImage = () => {
-
-        //setSelectedRequest({ ...selectedRequest, imagesUrl: updatedImages })
-    };
-
-    const removeImage = (index: number) => {
-        const updatedImages = selectedRequest.imagesUrl.filter((_, i) => i !== index);
-        setSelectedRequest({ ...selectedRequest, imagesUrl: updatedImages })
-    };
-    const [includeStartDate, setIncludeStartDate] = useState(initialRequestDetails?.startDate ? true : false);
-
+    const [includeStartDate, _] = useState(initialRequestDetails?.startDate ? true : false);
     return (
         <div className="justify-center mt-6">
             <div className={cn("gap-4")}>
-                <h2>Edit Job Request</h2>
+                {editable && initialRequestDetails && <h2>Edit Job Request</h2>}
+                {editable && !initialRequestDetails && <h2>Create Job Request</h2>}
                 <div className="space-y-4">
                     {selectedRequest.requestedOn && <div>
                         <Label>Requested On {selectedRequest.requestedOn}</Label>
@@ -120,6 +114,7 @@ export default function ({
                         <Input
                             value={selectedRequest.title}
                             onChange={(e) => setSelectedRequest({ ...selectedRequest, title: e.target.value })}
+                            contentEditable={editable}
                         />
                     </div>
 
@@ -128,22 +123,24 @@ export default function ({
                         <textarea className="flex justify-center items-center h-30 min-w-0 w-full border"
                             value={selectedRequest.description}
                             onChange={(e) => setSelectedRequest({ ...selectedRequest, description: e.target.value })}
+                            contentEditable={editable}
                         />
                     </div>
 
-                    <div>
-                        <Checkbox
+                    {editable && <div>
+                        <Checkbox contentEditable={editable}
                             checked={selectedRequest.showToEveryone}
                             onCheckedChange={(val) => {
                                 if (val !== "indeterminate")
                                     setSelectedRequest({ ...selectedRequest, showToEveryone: val })
                             }
                             }
+
                         />
                         <Label className="ml-1">Show to Everyone</Label>
-                    </div>
+                    </div>}
 
-                    <div>
+                    {/* <div>
                         <Checkbox
                             checked={selectedRequest.open}
                             onCheckedChange={(val) => {
@@ -152,69 +149,54 @@ export default function ({
                             }}
                         />
                         <Label className="ml-1">Open</Label>
-                    </div>
+                    </div> */}
 
                     <div className="space-y-2">
-                        <Label>Images</Label>
-                        {selectedRequest.imagesUrl.map((url, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                                {/* <Input
-                                    value={url}
-                                    onChange={(e) => handleImageChange(index, e.target.value)}
-                                />
-                                <Button variant="destructive" onClick={() => removeImage(index)}>
-                                    Remove
-                                </Button> */}
-                                <img
-                                src={
-                                url &&
-                                /^https?:\/\/[^\s]+$/.test(url)
-                                ? url
-                                : "https://via.placeholder.com/120x120.png?text=Profile"
-                                }
-                                alt="req"
-                                style={{
-                                width: 120,
-                                height: 120,
-                                borderRadius: "50%",
-                                objectFit: "cover",
-                                marginBottom: 10,
-                                border: "2px solid #ccc",
-                                }}
-                                />
-                            </div>
-                        ))}
-                        {/* <Input
-                                type="file"
-                                multiple
-                                name="image"
-                                accept="image/jpeg, image/png"
-                                onChange={e => {
-                                    (async () => {
-                                        if (e.target.files) {
-                                            const data = await Array.from(e.target.files).forEach(file => file.arrayBuffer());
-                                            setBillFormData({
-                                                ...billFormData,
-                                                image: Buffer.from(data).toString("base64"),
-                                            });
-                                            // setBillFormData({
-                                            //     ...billFormData,
-                                            //     image: await e.target.files[0].arrayBuffer() params.imagesUrl.every(btoa);
-                                            // })
+                        {selectedRequest.imagesUrl.length > 0 &&
+                            <div className="flex flex-col items-center justify-center">
+                                <Carousel className="w-full max-w-xs">
+                                    <CarouselContent>
+                                        {selectedRequest.imagesUrl.map((image, index) => {
+                                            return (
+                                                <CarouselItem key={"carousel" + index}>
+                                                    <img
+                                                        src={image}
+                                                    />
+                                                </CarouselItem>
+                                            );
+                                        })}
+                                    </CarouselContent>
+                                    <CarouselPrevious />
+                                    <CarouselNext />
+                                </Carousel>
+                            </div>}
+                        {editable && <Input
+                            type="file"
+                            multiple
+                            name="image"
+                            accept="image/jpeg, image/png"
+                            onChange={e => {
+                                (async () => {
+                                    if (e.target.files) {
+                                        const imagesData: string[] = [];
+                                        for (const file of e.target.files) {
+                                            imagesData.push(Buffer.from(await file.arrayBuffer()).toString("base64"));
                                         }
-                                    })();
-                                }}
-                            /> */}
+                                        setSelectedRequest({ ...selectedRequest, imagesBase64: imagesData });
+                                    }
+                                })();
+                            }}
+                        />}
                     </div>
-                    <div>
+                    {editable && <div>
                         <Button onClick={() => {
-                            const r = { ...selectedRequest };
+                            const r: ClientJobRequestCreateOrUpdate = { ...selectedRequest };
                             if (!includeStartDate) {
                                 r.startDate = undefined;
                             }
                             onUpdateRequestDetails(r);
                         }} disabled={disableUpdateButton}>{initialRequestDetails ? "Update" : "Create"}</Button>
-                    </div>
+                    </div>}
                 </div>
 
 
@@ -242,7 +224,7 @@ export default function ({
                     ))}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

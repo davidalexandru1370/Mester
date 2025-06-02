@@ -1,6 +1,4 @@
-﻿using Registry.DTO;
-
-namespace Registry.Models
+﻿namespace Registry.Models
 {
     public class ClientJobRequest
     {
@@ -18,9 +16,6 @@ namespace Registry.Models
         public Guid? JobApprovedId { get; set; }
         // sets whether this job request is open by the user. This flag no longer in relevant when the job is approved
         public bool Open { get; set; } = true;
-
-        public required List<string> ImagesUrl { get; set; }
-
-
+        public required string ImagesUrl { get; set; }
     }
 }

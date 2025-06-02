@@ -2,10 +2,10 @@
 {
     public class CreateClientJobRequest
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
         public required string Title { get; set; }
         public required string Description { get; set; }
         public DateTime? StartDate { get; set; }
-        public bool ShowToEveryone { get; set; }
+        public required bool ShowToEveryone { get; set; }
+        public required List<string> ImagesBase64 { get; set; }
     }
 }
