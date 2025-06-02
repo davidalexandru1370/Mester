@@ -168,7 +168,14 @@ namespace Registry.Services
             if (request.ShowToEveryone is not null) r.ShowToEveryone = request.ShowToEveryone.Value;
             if (request.Open is not null) r.Open = request.Open.Value;
             if (request.IncludeStartDate ?? false) r.StartDate = request.StartDate;
-            if (request.ImagesUrl is not null) r.ImagesUrl = request.ImagesUrl;
+            List<string> urlArray = new List<string>();
+            if (request.ImagesUrl is not null)
+                foreach (var i in request.ImagesUrl)
+                {
+                    string url = await _imageService.UploadImage(new Base64Stream(i).AsStream());
+                    urlArray.Add(url);
+                }
+            r.ImagesUrl = urlArray;
             _context.ClientRequests.Update(r);
             await _context.SaveChangesAsync();
             r.InitiatedBy = user;
