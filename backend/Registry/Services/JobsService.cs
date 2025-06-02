@@ -130,6 +130,7 @@ namespace Registry.Services
                 StartDate = request.StartDate,
                 InitiatedById = user.Id,
                 InitiatedBy = user,
+                ImagesUrl = []
             };
             var entity = await _context.ClientRequests.AddAsync(jobRequest);
             await _context.SaveChangesAsync();
@@ -167,6 +168,7 @@ namespace Registry.Services
             if (request.ShowToEveryone is not null) r.ShowToEveryone = request.ShowToEveryone.Value;
             if (request.Open is not null) r.Open = request.Open.Value;
             if (request.IncludeStartDate ?? false) r.StartDate = request.StartDate;
+            if (request.ImagesUrl is not null) r.ImagesUrl = request.ImagesUrl;
             _context.ClientRequests.Update(r);
             await _context.SaveChangesAsync();
             r.InitiatedBy = user;

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Registry.Repository;
 
@@ -11,9 +12,11 @@ using Registry.Repository;
 namespace Registry.Migrations
 {
     [DbContext(typeof(TradesManDbContext))]
-    partial class TradesManDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250602171709_ImagesUrl")]
+    partial class ImagesUrl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,43 +24,6 @@ namespace Registry.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Registry.Models.Bill", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("BillImage")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("JobId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Paid")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("Seen")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Sent")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("JobId");
-
-                    b.ToTable("Bills");
-                });
 
             modelBuilder.Entity("Registry.Models.ClientJobRequest", b =>
                 {
@@ -340,17 +306,6 @@ namespace Registry.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Registry.Models.Bill", b =>
-                {
-                    b.HasOne("Registry.Models.Job", "Job")
-                        .WithMany("Bills")
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Job");
-                });
-
             modelBuilder.Entity("Registry.Models.ClientJobRequest", b =>
                 {
                     b.HasOne("Registry.Models.User", "InitiatedBy")
@@ -472,11 +427,6 @@ namespace Registry.Migrations
                     b.Navigation("Messages");
 
                     b.Navigation("Responses");
-                });
-
-            modelBuilder.Entity("Registry.Models.Job", b =>
-                {
-                    b.Navigation("Bills");
                 });
 
             modelBuilder.Entity("Registry.Models.Speciality", b =>
