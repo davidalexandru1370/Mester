@@ -120,6 +120,7 @@ namespace Registry.Services
                     Id = x.Id,
                     Description = x.TradesManProfile!.Description,
                     Name = x.Name,
+                    ImageUrl = x.ImageUrl,
                     City = x.TradesManProfile.City,
                     County = x.TradesManProfile.County,
                     Specialities = x.TradesManProfile!.Specialities.Select(x => new SpecialityDTO

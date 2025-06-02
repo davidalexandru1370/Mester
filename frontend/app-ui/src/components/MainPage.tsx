@@ -130,6 +130,7 @@ export default function MainPage() {
             >
               <div>
                 <ServiceTypeCard
+                  tradesman={tradesman}
                   tradesmanId={tradesman.id}
                   key={tradesman.id}
                   title={tradesman.name}
