@@ -2,9 +2,11 @@ import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import NavMenu from "./NavMenu";
 import useToken from "./useToken";
+import { useUser } from "@/context/UserContext";
 
 export default function () {
   const { setToken } = useToken();
+   const { setUser } = useUser();
 
   let navigate = useNavigate();
 
@@ -12,6 +14,7 @@ export default function () {
     event.preventDefault();
 
     setToken("");
+    setUser(null);
 
     navigate("/auth");
   }
